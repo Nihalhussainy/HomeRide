@@ -1,0 +1,87 @@
+.ride-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
+}
+
+.ride-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ride-card h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.ride-card p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.ride-actions .custom-button {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.ride-type {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: white;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+
+.ride-type.REQUESTED {
+  background-color: #f97316; /* Orange */
+}
+
+.ride-type.OFFERED {
+  background-color: #22c55e; /* Green */
+}
+
+.participants-list {
+  margin-top: 15px;
+}
+
+.participants-list ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 5px;
+}
+
+.participants-list li {
+  background-color: #f0f0f0;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-top: 5px;
+}
+
+.your-post-label, .ride-full-label {
+  font-size: 14px;
+  font-style: italic;
+  color: #888;
+}
+
+.joined-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: green;
+  font-weight: bold;
+}
+
+.no-one-joined, .driver-found {
+    font-size: 12px;
+    color: #888;
+    margin: 5px 0 0 0;
+}
