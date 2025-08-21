@@ -7,10 +7,12 @@ function StarRatingDisplay({ score }) {
       {[...Array(5)].map((_, index) => (
         <FaStar
           key={index}
-          color={index < score ? "#ffc107" : "#e4e5e9"}
+          color={index < Math.round(score) ? "#ffc107" : "#4b5563"}
         />
       ))}
-      <span style={{fontWeight: 'bold', marginLeft: '5px'}}>Rated</span>
+      <span style={{fontWeight: '600', marginLeft: '5px', color: 'var(--text-primary)'}}>
+        Rated
+      </span>
     </div>
   );
 }

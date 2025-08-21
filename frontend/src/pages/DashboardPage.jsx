@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/Button.jsx';
 import RideCard from '../components/RideCard.jsx';
 import RideRequestForm from '../components/RideRequestForm.jsx';
 import '../App.css';
@@ -8,8 +7,8 @@ import axios from 'axios';
 
 function DashboardPage() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [offeredRides, setOfferedRides] = useState([]);
-  const [requestedRides, setRequestedRides] = useState([]);
+  const [rides, setRides] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
@@ -18,6 +17,7 @@ function DashboardPage() {
       navigate('/login');
       return;
     }
+    setIsLoading(true);
     try {
       const config = { headers: { 'Authorization': `Bearer ${token}` } };
       const [userResponse, ridesResponse] = await Promise.all([
@@ -25,46 +25,57 @@ function DashboardPage() {
         axios.get('http://localhost:8080/api/rides', config)
       ]);
       setCurrentUser(userResponse.data);
-      setOfferedRides(ridesResponse.data.filter(ride => ride.rideType === 'OFFERED'));
-      setRequestedRides(ridesResponse.data.filter(ride => ride.rideType === 'REQUESTED'));
+      setRides(ridesResponse.data);
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      localStorage.removeItem('token');
       navigate('/login');
+    } finally {
+      setIsLoading(false);
     }
   }, [navigate]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-  
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-    window.location.reload();
-  };
+
+  const offeredRides = rides.filter(ride => ride.rideType === 'OFFERED');
+  const requestedRides = rides.filter(ride => ride.rideType === 'REQUESTED');
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <h1>Welcome, {currentUser ? currentUser.name : 'User'}!</h1>
-        
+    <div className="main-container">
+      <header className="page-header">
+        <h1>Welcome, {currentUser ? currentUser.name : '...'}!</h1>
       </header>
       <main>
         <RideRequestForm onRideCreated={fetchData} />
-        <div className="ride-lists-container">
-          <div className="ride-list">
-            <h2>Rides Offered (You can join)</h2>
-            {offeredRides.map((ride) => (
-              <RideCard key={ride.id} ride={ride} currentUser={currentUser} onActionSuccess={fetchData} />
-            ))}
+        
+        {isLoading ? (
+          <p>Loading rides...</p>
+        ) : (
+          <div className="ride-lists-container">
+            <div className="ride-list">
+              <h2>Rides Offered</h2>
+              {offeredRides.length > 0 ? (
+                offeredRides.map((ride) => (
+                  <RideCard key={ride.id} ride={ride} currentUser={currentUser} onActionSuccess={fetchData} />
+                ))
+              ) : (
+                <p>No rides are being offered right now.</p>
+              )}
+            </div>
+            <div className="ride-list">
+              <h2>Rides Requested</h2>
+              {requestedRides.length > 0 ? (
+                requestedRides.map((ride) => (
+                  <RideCard key={ride.id} ride={ride} currentUser={currentUser} onActionSuccess={fetchData} />
+                ))
+              ) : (
+                <p>No one is requesting a ride right now.</p>
+              )}
+            </div>
           </div>
-          <div className="ride-list">
-            <h2>Rides Requested (Looking for drivers)</h2>
-            {requestedRides.map((ride) => (
-              <RideCard key={ride.id} ride={ride} currentUser={currentUser} onActionSuccess={fetchData} />
-            ))}
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );

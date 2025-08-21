@@ -1,42 +1,38 @@
+/* src/components/RideRequestForm.css */
+
 .ride-request-container {
-  background-color: #ffffff;
+  background-color: var(--surface-color);
   padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--surface-color-light);
   margin-bottom: 40px;
-}
-
-.ride-request-container h2 {
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 20px;
-}
-
-.ride-request-container form button {
-  width: 100%;
-  margin-top: 10px;
 }
 
 .ride-type-toggle {
   display: flex;
-  margin-bottom: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  margin-bottom: 24px;
+  background-color: var(--background-color);
+  border-radius: var(--border-radius);
   overflow: hidden;
+  padding: 4px;
+  border: 1px solid var(--surface-color-light);
 }
 
 .ride-type-toggle button {
   flex: 1;
   padding: 12px;
   border: none;
-  background-color: #f9f9f9;
+  background-color: transparent;
+  color: var(--text-secondary);
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .ride-type-toggle button.active {
-  background-color: #667eea;
-  color: white;
+  background-color: var(--primary-color);
+  /* FIX: Changed text color to black for the active (white) button */
+  color: #000000;
 }

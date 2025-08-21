@@ -1,28 +1,53 @@
+/* src/components/RatingModal.css */
+
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(17, 24, 39, 0.8); /* Dark overlay */
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease;
 }
 
 .modal-content {
-  background: white;
+  background: var(--surface-color);
   padding: 30px;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--surface-color-light);
   width: 90%;
   max-width: 500px;
+  box-shadow: var(--card-shadow);
+  transform: scale(0.95);
+  animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  text-align: center;
 }
 
 .star-rating {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
+  gap: 10px;
 }
 
 .star-rating input[type="radio"] {
@@ -31,17 +56,31 @@
 
 .star-rating .star {
   cursor: pointer;
-  transition: color 200ms;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.star-rating .star:hover {
+    transform: scale(1.2);
 }
 
 .modal-content textarea {
   width: 100%;
-  height: 80px;
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  margin-bottom: 20px;
+  height: 100px;
+  padding: 14px;
+  box-sizing: border-box;
+  background-color: var(--background-color);
+  border: 1px solid var(--surface-color-light);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  resize: vertical;
+}
+
+.modal-content textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: var(--input-shadow);
 }
 
 .modal-actions {
@@ -50,10 +89,10 @@
   gap: 10px;
 }
 
-.close-button {
-  padding: 10px 20px;
-  border: 1px solid #ccc;
-  background-color: #f0f0f0;
-  border-radius: 5px;
-  cursor: pointer;
+/* For labels in EditUserModal */
+.modal-content label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-secondary);
 }

@@ -1,7 +1,9 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+// Use NavLink for active styling
+import { NavLink, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import './Navbar.css';
+import { FaCarSide } from 'react-icons/fa'; // Import a car icon
 
 function Navbar() {
   const navigate = useNavigate();
@@ -11,45 +13,40 @@ function Navbar() {
   if (token) {
     try {
       const decodedToken = jwtDecode(token);
-      // The role from our backend JWT is "ROLE_ADMIN" or "ROLE_USER", etc.
-      // We strip the "ROLE_" prefix to get the simple role name.
       userRole = decodedToken.role.replace('ROLE_', '');
     } catch (error) {
       console.error("Invalid or expired token:", error);
-      // If the token is bad, it's a good idea to clear it
       localStorage.removeItem('token');
     }
   }
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    alert('You have been logged out.');
+    // We don't need an alert, the redirect is enough feedback
     navigate('/login');
-    window.location.reload(); // Force a refresh to update the navbar state
+    // No need to force reload, React Router handles the state change
   };
 
   return (
     <nav className="navbar">
-      <Link to={token ? "/dashboard" : "/login"} className="navbar-brand">
+      <NavLink to={token ? "/dashboard" : "/login"} className="navbar-brand">
+        <FaCarSide size={30} className="navbar-brand-icon" />
         HomeRide
-      </Link>
+      </NavLink>
       <div className="nav-links">
         {token ? (
-          // If a user IS logged in, show these links
           <>
-            <Link to="/dashboard">Dashboard</Link>
-            <Link to="/profile">My Profile</Link>
-            {/* This link will ONLY appear if the user's role is ADMIN */}
+            <NavLink to="/dashboard">Dashboard</NavLink>
+            <NavLink to="/profile">My Profile</NavLink>
             {userRole === 'ADMIN' && (
-              <Link to="/admin">Admin</Link>
+              <NavLink to="/admin">Admin Panel</NavLink>
             )}
             <button onClick={handleLogout} className="logout-button">Logout</button>
           </>
         ) : (
-          // If a user is NOT logged in, show these links
           <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
+            <NavLink to="/login">Login</NavLink>
+            <NavLink to="/register">Register</NavLink>
           </>
         )}
       </div>

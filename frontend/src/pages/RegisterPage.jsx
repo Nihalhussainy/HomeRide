@@ -1,83 +1,79 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ for redirect
+import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import Input from "../components/Input.jsx";
 import "../App.css";
 import axios from "axios";
+import { FiUserPlus } from "react-icons/fi";
 
 function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate(); // ✅ initialize navigation
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // Handle Register
   const handleRegister = async (event) => {
     event.preventDefault();
+    setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:8080/api/auth/register", {
-        name: name,
-        email: email,
-        password: password,
+      await axios.post("http://localhost:8080/api/auth/register", {
+        name,
+        email,
+        password,
       });
 
-      alert("✅ Registration successful! Please log in.");
-      console.log("Server response:", response.data);
-
-      // ✅ Redirect to login page after successful registration
+      alert("Registration successful! Please log in.");
       navigate("/login");
 
     } catch (error) {
-      if (error.response) {
-        // Backend returned an error
-        if (error.response.status === 400) {
-          alert("❌ Registration failed: Email already in use.");
-        } else {
-          alert(`❌ Registration failed: ${error.response.data}`);
-        }
-        console.error("Backend error:", error.response.data);
-      } else if (error.request) {
-        // No response received
-        alert("⚠️ No response from server. Check if backend is running.");
-        console.error("No response:", error.request);
-      } else {
-        // Other errors
-        alert("⚠️ Error: " + error.message);
-        console.error("Error:", error.message);
-      }
+      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
+      alert(errorMessage);
+      console.error("Registration error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="app-container">
+    <div className="auth-container">
       <div className="welcome-panel">
         <h2>Join HomeRide</h2>
-        <p>Create your account to start sharing rides.</p>
+        <p>Create your account to start sharing rides with colleagues.</p>
       </div>
       <div className="form-panel">
-        <div className="login-container">
+        <div className="form-box">
           <h1>Create Account</h1>
           <form onSubmit={handleRegister}>
             <Input
               type="text"
-              placeholder="Your Name"
+              placeholder="Your Full Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
             />
             <Input
               type="email"
-              placeholder="Email"
+              placeholder="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
             <Input
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
-            <Button>Register</Button>
+            <Button disabled={isLoading}>
+              <FiUserPlus />
+              {isLoading ? 'Creating Account...' : 'Register'}
+            </Button>
           </form>
+          <p style={{ textAlign: 'center', marginTop: '20px', color: 'var(--text-secondary)' }}>
+            Already have an account? <Link to="/login" style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Log in</Link>
+          </p>
         </div>
       </div>
     </div>
@@ -85,4 +81,3 @@ function RegisterPage() {
 }
 
 export default RegisterPage;
-  

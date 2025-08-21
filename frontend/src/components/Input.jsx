@@ -1,15 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Input.css';
+import { FiEye, FiEyeOff } from 'react-icons/fi'; // Import eye icons
 
-function Input({ type, placeholder, value, onChange }) {
+function Input({ type, placeholder, value, onChange, ...props }) {
+  // State to manage password visibility
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Determine the actual type of the input field
+  const inputType = type === 'password' && isPasswordVisible ? 'text' : type;
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
+  };
+
   return (
-    <input
-      className="custom-input"
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-    />
+    <div className="input-wrapper">
+      <input
+        className="custom-input"
+        type={inputType}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        {...props}
+      />
+      {/* Only show the icon if the original type was "password" */}
+      {type === 'password' && (
+        <div className="password-toggle-icon" onClick={togglePasswordVisibility}>
+          {isPasswordVisible ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+        </div>
+      )}
+    </div>
   );
 }
 

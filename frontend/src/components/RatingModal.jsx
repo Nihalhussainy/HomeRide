@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './RatingModal.css';
 import Button from './Button.jsx';
 import { FaStar } from 'react-icons/fa';
+import { FiSend } from 'react-icons/fi';
 
 function RatingModal({ ride, ratee, onClose, onSubmitRating }) {
   const [score, setScore] = useState(0);
@@ -22,8 +23,8 @@ function RatingModal({ ride, ratee, onClose, onSubmitRating }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
         <h2>Rate Your Trip with {ratee.name}</h2>
         <div className="star-rating">
           {[...Array(5)].map((star, index) => {
@@ -39,7 +40,7 @@ function RatingModal({ ride, ratee, onClose, onSubmitRating }) {
                 <FaStar
                   className="star"
                   size={40}
-                  color={currentRating <= (hover || score) ? "#ffc107" : "#e4e5e9"}
+                  color={currentRating <= (hover || score) ? "#ffc107" : "#4b5563"}
                   onMouseEnter={() => setHover(currentRating)}
                   onMouseLeave={() => setHover(0)}
                 />
@@ -48,13 +49,16 @@ function RatingModal({ ride, ratee, onClose, onSubmitRating }) {
           })}
         </div>
         <textarea
-          placeholder="Leave a comment..."
+          placeholder="Leave a comment (optional)..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
         <div className="modal-actions">
-          <Button onClick={handleSubmit}>Submit Rating</Button>
-          <button className="close-button" onClick={onClose}>Cancel</button>
+          <Button onClick={onClose} className="secondary">Cancel</Button>
+          <Button onClick={handleSubmit}>
+            <FiSend/>
+            Submit Rating
+          </Button>
         </div>
       </div>
     </div>

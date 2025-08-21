@@ -3,6 +3,7 @@ import axios from 'axios';
 import Button from '../components/Button.jsx';
 import EditUserModal from '../components/EditUserModal.jsx';
 import '../App.css';
+import { FiUsers, FiNavigation } from 'react-icons/fi';
 
 function AdminDashboardPage() {
   const [employees, setEmployees] = useState([]);
@@ -25,7 +26,7 @@ function AdminDashboardPage() {
       setStats(statsResponse.data);
       setEmployees(employeesResponse.data);
     } catch (err) {
-      setError('Failed to fetch admin data.');
+      setError('Failed to fetch admin data. You may not have permission.');
     }
   }, []);
 
@@ -49,51 +50,56 @@ function AdminDashboardPage() {
   };
 
   return (
-    <div className="dashboard-container">
-      <h1>Admin Dashboard</h1>
-      {error && <p style={{color: 'red'}}>{error}</p>}
+    <div className="main-container">
+      <header className="page-header">
+        <h1>Admin Dashboard</h1>
+      </header>
+      
+      {error && <p style={{color: 'var(--danger-color)'}}>{error}</p>}
       
       <h2>Overview</h2>
       <div className="stats-container">
         <div className="stat-card">
-          <h3>Total Users</h3>
-          <p>{stats ? stats.totalUsers : 'Loading...'}</p>
+          <h3><FiUsers /> Total Users</h3>
+          <p>{stats ? stats.totalUsers : '...'}</p>
         </div>
         <div className="stat-card">
-          <h3>Total Rides</h3>
-          <p>{stats ? stats.totalRides : 'Loading...'}</p>
+          <h3><FiNavigation /> Total Rides</h3>
+          <p>{stats ? stats.totalRides : '...'}</p>
         </div>
       </div>
 
       <h2>All Employees</h2>
-      <table className="employee-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Travel Credit</th>
-            <th>Rides Traveled</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.map(employee => (
-            <tr key={employee.id}>
-              <td>{employee.id}</td>
-              <td>{employee.name}</td>
-              <td>{employee.email}</td>
-              <td>{employee.role}</td>
-              <td>{employee.travelCredit.toFixed(2)}</td>
-              <td>{employee.ridesTraveled}</td>
-              <td>
-                <Button onClick={() => setSelectedUser(employee)}>Edit</Button>
-              </td>
+      <div style={{ overflowX: 'auto' }}>
+        <table className="employee-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Travel Credit</th>
+              <th>Rides Traveled</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {employees.map(employee => (
+              <tr key={employee.id}>
+                <td>{employee.id}</td>
+                <td>{employee.name}</td>
+                <td>{employee.email}</td>
+                <td>{employee.role}</td>
+                <td>${employee.travelCredit.toFixed(2)}</td>
+                <td>{employee.ridesTraveled}</td>
+                <td>
+                  <Button onClick={() => setSelectedUser(employee)}>Edit</Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       
       {selectedUser && (
         <EditUserModal 

@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage.jsx';
 import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import Navbar from './components/Navbar.jsx';
+import RouteGuard from './components/RouteGuard.jsx'; // Import our new guard
 import './App.css';
 
 function App() {
@@ -12,12 +13,26 @@ function App() {
     <div>
       <Navbar />
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+
+        {/* Protected Routes for All Logged-in Users */}
+        <Route 
+          path="/dashboard" 
+          element={<RouteGuard><DashboardPage /></RouteGuard>} 
+        />
+        <Route 
+          path="/profile" 
+          element={<RouteGuard><ProfilePage /></RouteGuard>} 
+        />
+
+        {/* Protected Route exclusively for Admins */}
+        <Route 
+          path="/admin" 
+          element={<RouteGuard adminOnly={true}><AdminDashboardPage /></RouteGuard>} 
+        />
       </Routes>
     </div>
   );

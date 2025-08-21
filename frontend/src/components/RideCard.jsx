@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import './RideCard.css';
 import Button from './Button.jsx';
 import axios from 'axios';
-import { FiCheckCircle } from 'react-icons/fi';
+import { FiCheckCircle, FiClock, FiUser, FiArrowRight, FiUsers } from 'react-icons/fi';
 
 function RideCard({ ride, currentUser, onActionSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,10 +26,11 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
     try {
       await axios.post(endpoint, {}, { headers: { 'Authorization': `Bearer ${token}` } });
       setIsActionDone(true);
-      setTimeout(() => onActionSuccess(), 1500);
+      setTimeout(() => onActionSuccess(), 1500); // Give user time to see success state
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Action failed.';
-      alert(errorMessage);
+      const errorMessage = error.response?.data?.message || 'Action failed. You might have already joined or the ride is full.';
+      alert(errorMessage); // We can replace this with a toast notification later
+    } finally {
       setIsLoading(false);
     }
   };
@@ -39,39 +40,61 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
 
   return (
     <div className="ride-card">
-      <div className="ride-details">
-        <span className={`ride-type ${ride.rideType}`}>{ride.rideType}</span>
-        <h3>{ride.origin} to {ride.destination}</h3>
-        <p><strong>Posted by:</strong> {ride.requester?.name || 'Unknown'}</p>
-        <p><strong>Date & Time:</strong> {new Date(ride.travelDateTime).toLocaleString()}</p>
-        <div className="participants-list">
-          <strong>{ride.rideType === 'OFFERED' ? 'Passengers:' : 'Driver:'}</strong>
-          {ride.rideType === 'OFFERED' ? (
-            ride.participants?.length > 0 ? (
-              <ul>{ride.participants.map(p => <li key={p.id}>{p.participant.name}</li>)}</ul>
-            ) : <p className="no-one-joined">No passengers have joined yet.</p>
+      <div className="ride-card-header">
+        <div className="ride-path">
+          <h3>
+            {ride.origin} <FiArrowRight className="ride-path-icon" /> {ride.destination}
+          </h3>
+        </div>
+        <span className={`ride-type-badge ${ride.rideType}`}>{ride.rideType}</span>
+      </div>
+
+      <div className="ride-card-body">
+        <div className="ride-info">
+          <div className="info-item">
+            <FiClock />
+            <span>{new Date(ride.travelDateTime).toLocaleString()}</span>
+          </div>
+          <div className="info-item">
+            <FiUser />
+            Posted by <span>{isMyRide ? 'You' : ride.requester?.name}</span>
+          </div>
+        </div>
+        <div className="ride-actions">
+          {isMyRide ? (
+            <span className="ride-status-label">This is your post</span>
+          ) : isActionDone || isAlreadyInvolved ? (
+            <div className="ride-status-success">
+              <FiCheckCircle size={20} />
+              <span>{ride.rideType === 'REQUESTED' ? 'Accepted' : 'Joined'}</span>
+            </div>
+          ) : isDriverFound ? (
+            <span className="ride-status-label">Ride is full</span>
           ) : (
-            isDriverFound ? (
-              <p className="driver-found">{ride.driver.name} has accepted.</p>
-            ) : <p className="no-one-joined">Looking for a driver.</p>
+            <Button onClick={handleAction} disabled={isLoading}>
+              {isLoading ? 'Processing...' : (ride.rideType === 'OFFERED' ? 'Request to Join' : 'Offer to Drive')}
+            </Button>
           )}
         </div>
       </div>
-      <div className="ride-actions">
-        {isMyRide ? (
-          <span className="your-post-label">This is your post</span>
-        ) : isActionDone || isAlreadyInvolved ? (
-          <div className="joined-success">
-            <FiCheckCircle size={24} color="green" />
-            <span>{ride.rideType === 'REQUESTED' ? 'Accepted' : 'Joined'}</span>
-          </div>
-        ) : isDriverFound ? (
-          <span className="ride-full-label">This ride is full</span>
-        ) : (
-          <Button onClick={handleAction} disabled={isLoading}>
-            {isLoading ? 'Processing...' : (ride.rideType === 'OFFERED' ? 'Request to Join' : 'Offer to Drive')}
-          </Button>
-        )}
+
+      <div className="ride-card-footer">
+        <div className="participants-list">
+          <strong><FiUsers /> {ride.rideType === 'OFFERED' ? 'Passengers:' : 'Driver:'}</strong>
+          {ride.rideType === 'OFFERED' ? (
+            ride.participants?.length > 0 ? (
+              <div className="participants-pills">
+                {ride.participants.map(p => <span key={p.id} className="participant-pill">{p.participant.name}</span>)}
+              </div>
+            ) : <p className="no-participants">No passengers have joined yet.</p>
+          ) : (
+            isDriverFound ? (
+              <div className="participants-pills">
+                <span className="participant-pill">{ride.driver.name}</span>
+              </div>
+            ) : <p className="no-participants">Looking for a driver.</p>
+          )}
+        </div>
       </div>
     </div>
   );

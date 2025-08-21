@@ -1,20 +1,44 @@
+/* src/components/Button.css */
+
 .custom-button {
-  background-color: #667eea;
-  color: white;
-  padding: 10px 20px;
+  background-color: var(--primary-color);
+  /* FIX: Changed text color to black for contrast on white buttons */
+  color: #000000; 
+  padding: 12px 24px;
   border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  font-weight: bold;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Manrope', sans-serif;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .custom-button:hover {
-  background-color: #5a67d8;
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .custom-button:disabled {
-  background-color: #ccc;
+  background-color: var(--surface-color-light);
+  color: var(--text-secondary);
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* This style is for secondary actions, like a "Cancel" button */
+.custom-button.secondary {
+    background-color: var(--surface-color-light);
+    /* Text should be white for dark secondary buttons */
+    color: var(--text-primary);
+}
+
+.custom-button.secondary:hover {
+    background-color: #4b5563;
 }
