@@ -10,17 +10,23 @@ function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [gender, setGender] = useState(""); 
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async (event) => {
     event.preventDefault();
+    if (!gender) {
+      alert("Please select your gender.");
+      return;
+    }
     setIsLoading(true);
     try {
       await axios.post("http://localhost:8080/api/auth/register", {
         name,
         email,
         password,
+        gender,
       });
 
       alert("Registration successful! Please log in.");
@@ -66,7 +72,24 @@ function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <Button disabled={isLoading}>
+            
+            <div className="input-wrapper">
+              <select 
+                className="custom-input" 
+                value={gender} 
+                onChange={(e) => setGender(e.target.value)} 
+                required
+                style={{ appearance: 'none' }}
+              >
+                <option value="" disabled>Select Gender...</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            {/* FIX: Added type="submit" to the button */}
+            <Button type="submit" disabled={isLoading}>
               <FiUserPlus />
               {isLoading ? 'Creating Account...' : 'Register'}
             </Button>

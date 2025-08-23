@@ -7,13 +7,12 @@ import java.util.List;
 import com.homeride.backend.model.Employee;
 import com.homeride.backend.model.RideRequest;
 
-
 @Repository
 public interface RatingRepository extends JpaRepository<Rating, Long> {
-    // We can add custom query methods here later if needed
     List<Rating> findByRateeId(Long rateeId);
     boolean existsByRideRequestAndRaterAndRatee(RideRequest rideRequest, Employee rater, Employee ratee);
-    // Add this method
     List<Rating> findByRater(Employee rater);
 
+    // NEW: A method to delete all ratings associated with a specific ride request.
+    void deleteAllByRideRequest(RideRequest rideRequest);
 }

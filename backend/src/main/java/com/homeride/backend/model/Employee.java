@@ -27,12 +27,22 @@ public class Employee {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = true)
+    private String gender;
+
+    // NEW: Added phone number field (can be null)
+    @Column(nullable = true)
+    private String phoneNumber;
+
+    @Column(nullable = true)
+    private String profilePictureUrl;
+
     private double travelCredit;
 
     @Column(nullable = false)
     private String role;
 
-    @CreationTimestamp // Lets the database set the timestamp when the user is created
+    @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
 }

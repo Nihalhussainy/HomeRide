@@ -53,4 +53,11 @@ public class RideRequestController {
         List<RideRequest> myRides = rideRequestService.getRidesForUser(principal.getName());
         return ResponseEntity.ok(myRides);
     }
+
+    // NEW: Endpoint for deleting a ride
+    @DeleteMapping("/{rideId}")
+    public ResponseEntity<?> deleteRide(@PathVariable Long rideId, Principal principal) {
+        rideRequestService.deleteRide(rideId, principal.getName());
+        return ResponseEntity.ok().build(); // Return a 200 OK response with no body
+    }
 }

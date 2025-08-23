@@ -1,14 +1,39 @@
 /* src/App.css */
 
-/* Main container for the split-screen auth layout */
+/* 1. Root Variables for Consistent Theming */
+:root {
+  --background-color: #111827; /* Dark navy */
+  --surface-color: #1f2937;    /* Lighter navy/grey */
+  --surface-color-light: #374151; /* Even lighter grey */
+  
+  --primary-color: #8b5cf6;     /* Purple */
+  --danger-color: #ef4444;      /* Red */
+
+  --text-primary: #f9fafb;      /* Off-white */
+  --text-secondary: #9ca3af;   /* Grey */
+
+  --border-radius: 8px;
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+  /* Font */
+  font-family: 'Manrope', sans-serif;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+
+/* 2. Authentication Pages Layout */
 .auth-container {
   display: flex;
   width: 100vw;
   height: 100vh;
-  overflow: hidden; /* Prevent scrolling on auth pages */
+  overflow: hidden;
 }
 
-/* Left "Welcome" Panel Styling */
 .welcome-panel {
   flex: 1;
   background: linear-gradient(135deg, #1f2937, #111827);
@@ -19,7 +44,6 @@
   align-items: center;
   text-align: center;
   padding: 50px;
-  /* Adding a subtle background pattern */
   background-image: radial-gradient(circle at 1px 1px, var(--surface-color-light) 1px, transparent 0);
   background-size: 20px 20px;
 }
@@ -38,7 +62,6 @@
   color: var(--text-secondary);
 }
 
-/* Right "Form" Panel Styling */
 .form-panel {
   flex: 1;
   background-color: var(--surface-color);
@@ -70,7 +93,8 @@
   width: 100%;
 }
 
-/* Main content container for pages after login */
+
+/* 3. General Page Layout */
 .main-container {
   width: 100%;
   max-width: 1200px;
@@ -84,7 +108,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Header for Dashboard/Profile pages */
 .page-header {
   border-bottom: 1px solid var(--surface-color-light);
   padding-bottom: 15px;
@@ -97,14 +120,14 @@
   color: var(--text-primary);
 }
 
-/* Grid layout for Dashboard */
+
+/* 4. Dashboard & Admin Styles */
 .ride-lists-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
 }
 
-/* Admin Dashboard Styles */
 .stats-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -161,13 +184,52 @@
   border-bottom: none;
 }
 
-/* Profile Page Styles */
-.profile-details {
+
+/* 5. Profile Page Styles */
+.profile-details-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 30px;
+  align-items: center;
   background-color: var(--surface-color);
   padding: 30px;
   border-radius: var(--border-radius);
   margin-bottom: 30px;
   border: 1px solid var(--surface-color-light);
+}
+
+.profile-picture-container {
+  width: 120px;
+  height: 120px;
+}
+
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-picture-placeholder {
+  width: 100%;
+  height: 100%;
+  color: var(--surface-color-light);
+}
+
+.profile-info-container p {
+  margin: 10px 0;
+  font-size: 1.1rem;
+}
+
+.profile-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.feedback-column h2, .history-column h2 {
+  margin-top: 0;
 }
 
 .history-ride-card {
@@ -204,24 +266,89 @@
   gap: 10px;
   margin-top: 5px;
 }
-/* Add these styles to the end of src/App.css */
 
-.profile-content-grid {
-  display: grid;
-  /* Feedback column is 1/3, History is 2/3 */
-  grid-template-columns: 1fr 2fr; 
-  gap: 40px;
-  margin-top: 40px;
+.profile-display-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
 }
 
-.feedback-column h2, .history-column h2 {
-    margin-top: 0;
+.profile-edit-form {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  width: 100%;
 }
 
-/* Make it responsive for smaller screens */
+.profile-picture-edit-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+/* --- THIS IS THE FIX --- */
+/* Constrain the image and placeholder size within the edit form */
+.profile-picture-edit-area .profile-picture,
+.profile-picture-edit-area .profile-picture-placeholder {
+  width: 120px;
+  height: 120px;
+}
+
+.profile-picture-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 120px;
+}
+
+.profile-picture-actions .custom-button {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.9rem;
+}
+
+.profile-picture-actions .custom-button.remove:hover {
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+    color: white;
+}
+
+.profile-fields-container {
+  flex: 1;
+}
+
+.profile-edit-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: flex-end;
+}
+
+
+/* 6. Responsive Media Queries */
 @media (max-width: 960px) {
   .profile-content-grid {
-    grid-template-columns: 1fr; /* Stack columns */
+    grid-template-columns: 1fr;
   }
 }
 
+@media (max-width: 768px) {
+    .ride-lists-container {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-details-grid, .profile-edit-form {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .profile-display-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+}

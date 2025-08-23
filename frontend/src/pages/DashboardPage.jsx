@@ -8,16 +8,19 @@ import axios from 'axios';
 function DashboardPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [rides, setRides] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isFirstLoad = false) => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
     }
-    setIsLoading(true);
+    if (isFirstLoad) {
+      setIsInitialLoading(true);
+    }
+
     try {
       const config = { headers: { 'Authorization': `Bearer ${token}` } };
       const [userResponse, ridesResponse] = await Promise.all([
@@ -31,16 +34,24 @@ function DashboardPage() {
       localStorage.removeItem('token');
       navigate('/login');
     } finally {
-      setIsLoading(false);
+      if (isFirstLoad) {
+        setIsInitialLoading(false);
+      }
     }
   }, [navigate]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
   }, [fetchData]);
 
-  const offeredRides = rides.filter(ride => ride.rideType === 'OFFERED');
-  const requestedRides = rides.filter(ride => ride.rideType === 'REQUESTED');
+  // --- SORTING LOGIC ADDED HERE ---
+  const offeredRides = rides
+    .filter(ride => ride.rideType === 'OFFERED')
+    .sort((a, b) => b.id - a.id); // Sort by ID descending (newest first)
+
+  const requestedRides = rides
+    .filter(ride => ride.rideType === 'REQUESTED')
+    .sort((a, b) => b.id - a.id); // Sort by ID descending (newest first)
 
   return (
     <div className="main-container">
@@ -50,7 +61,7 @@ function DashboardPage() {
       <main>
         <RideRequestForm onRideCreated={fetchData} />
         
-        {isLoading ? (
+        {isInitialLoading ? (
           <p>Loading rides...</p>
         ) : (
           <div className="ride-lists-container">

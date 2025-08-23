@@ -5,6 +5,7 @@ import Input from '../components/Input.jsx';
 import '../App.css';
 import axios from 'axios';
 import { FiLogIn } from 'react-icons/fi';
+import { jwtDecode } from 'jwt-decode';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -21,8 +22,17 @@ function LoginPage() {
         password: password
       });
       
-      localStorage.setItem('token', response.data.token);
-      navigate('/dashboard');
+      const token = response.data.token;
+      localStorage.setItem('token', token);
+
+      const decodedToken = jwtDecode(token);
+      const userRole = decodedToken.role.replace('ROLE_', '');
+
+      if (userRole === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
 
     } catch (error) {
       alert('Login failed. Please check your email and password.');
@@ -56,7 +66,8 @@ function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <Button disabled={isLoading}>
+            {/* FIX: Added type="submit" to the button */}
+            <Button type="submit" disabled={isLoading}>
               <FiLogIn />
               {isLoading ? 'Logging In...' : 'Login'}
             </Button>

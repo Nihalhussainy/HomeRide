@@ -10,4 +10,9 @@ public class RideRequestDTO {
     private LocalDateTime travelDateTime;
     private String rideType;
     private boolean isEmergency;
+
+    // NEW: Added vehicle and preference fields
+    private String vehicleModel;
+    private Integer vehicleCapacity;
+    private String genderPreference;
 }

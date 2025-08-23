@@ -137,3 +137,49 @@
   color: var(--text-secondary);
   font-style: italic;
 }
+/* Add this to the end of your file */
+.ride-meta-info {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+}
+/* Add this to the end of your file */
+.participant-pill.driver {
+  background-color: var(--primary-hover);
+  color: #000000;
+  font-weight: 600;
+}
+/* Add this to the end of your file */
+.participant-pill.driver {
+  background-color: #3b82f6; /* A subtle blue to indicate the driver */
+  color: var(--text-primary);
+  font-weight: 600;
+}
+/* Add this to the end of your file */
+
+/* Styles for the departed status label */
+.ride-status-departed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f59e0b; /* Amber color for warning */
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* Fade out the card slightly if it has departed */
+.ride-card.departed {
+  opacity: 0.6;
+  border-color: transparent;
+}
+/* Add this to src/components/RideCard.css */
+
+.ride-status-cancelled {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--danger-color); /* Red color for cancelled */
+  font-weight: 600;
+  font-style: italic;
+}
+

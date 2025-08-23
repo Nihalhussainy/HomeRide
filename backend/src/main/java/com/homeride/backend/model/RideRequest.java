@@ -32,13 +32,21 @@ public class RideRequest {
 
     private String status;
 
+    // NEW: Added vehicle model (can be null if it's a request)
+    private String vehicleModel;
+
+    // NEW: Added vehicle capacity (can be null if it's a request)
+    private Integer vehicleCapacity;
+
+    // NEW: Added gender preference (e.g., "ALL", "FEMALE_ONLY")
+    private String genderPreference;
+
     @ManyToOne
     @JoinColumn(name = "requester_id", nullable = false)
     private Employee requester;
 
-    // ADD THIS NEW FIELD
     @ManyToOne
-    @JoinColumn(name = "driver_id") // This can be null until a driver accepts
+    @JoinColumn(name = "driver_id")
     private Employee driver;
 
     @OneToMany(mappedBy = "rideRequest", cascade = CascadeType.ALL, fetch = FetchType.EAGER)

@@ -1,88 +1,105 @@
-
 package com.homeride.backend.service;
-import java.util.List;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import java.util.Collections;
+
+import com.homeride.backend.dto.AdminUserUpdateDTO;
 import com.homeride.backend.dto.LoginRequestDTO;
 import com.homeride.backend.dto.RegisterRequestDTO;
+import com.homeride.backend.dto.UserProfileUpdateDTO; // NEW IMPORT
 import com.homeride.backend.model.Employee;
 import com.homeride.backend.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.homeride.backend.dto.AdminUserUpdateDTO;
-import java.security.Principal;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 public class EmployeeService implements UserDetailsService {
 
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FileStorageService fileStorageService;
 
     @Autowired
-    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder) {
+    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder, FileStorageService fileStorageService) {
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
-
+        this.fileStorageService = fileStorageService;
     }
-    // Add this method inside your EmployeeService class
+
     public Employee findEmployeeByEmail(String email) {
         return employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
     }
+
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAll();
     }
-    // THIS METHOD WAS LIKELY MISSING
+
     public Employee registerEmployee(RegisterRequestDTO registerRequest) {
         Employee newEmployee = new Employee();
         newEmployee.setName(registerRequest.getName());
         newEmployee.setEmail(registerRequest.getEmail());
         newEmployee.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        newEmployee.setGender(registerRequest.getGender());
         newEmployee.setRole("EMPLOYEE");
         newEmployee.setTravelCredit(1000.0);
         return employeeRepository.save(newEmployee);
     }
 
-    // THIS METHOD WAS LIKELY MISSING
-    public Employee loginEmployee(LoginRequestDTO loginRequest) {
-        Employee employee = employeeRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    // NEW: Method to update user's own profile (name and phone)
+    public Employee updateUserProfile(String email, UserProfileUpdateDTO updateDTO) {
+        Employee employee = findEmployeeByEmail(email);
 
-        if (!passwordEncoder.matches(loginRequest.getPassword(), employee.getPassword())) {
-            throw new RuntimeException("Invalid password");
+        if (updateDTO.getName() != null && !updateDTO.getName().isEmpty()) {
+            employee.setName(updateDTO.getName());
         }
-        return employee;
+        if (updateDTO.getPhoneNumber() != null) {
+            employee.setPhoneNumber(updateDTO.getPhoneNumber());
+        }
+        return employeeRepository.save(employee);
     }
 
-    // This is the method for Spring Security
+    public Employee updateProfilePicture(String email, MultipartFile file) {
+        Employee employee = findEmployeeByEmail(email);
+        String filename = fileStorageService.store(file);
+        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/uploads/")
+                .path(filename)
+                .toUriString();
+        employee.setProfilePictureUrl(fileDownloadUri);
+        return employeeRepository.save(employee);
+    }
+
+    public Employee removeProfilePicture(String email) {
+        Employee employee = findEmployeeByEmail(email);
+        employee.setProfilePictureUrl(null);
+        return employeeRepository.save(employee);
+    }
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Employee employee = employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-
-        // This now includes the user's role for Spring Security
         return new User(employee.getEmail(), employee.getPassword(), Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + employee.getRole())));
     }
+
     public Employee updateUserAsAdmin(Long userId, AdminUserUpdateDTO updateRequest) {
         Employee employee = employeeRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + userId));
-
-        // Update fields only if they are provided in the request
         if (updateRequest.getRole() != null) {
             employee.setRole(updateRequest.getRole());
         }
         if (updateRequest.getTravelCredit() != null) {
             employee.setTravelCredit(updateRequest.getTravelCredit());
         }
-
         return employeeRepository.save(employee);
     }
-
 }

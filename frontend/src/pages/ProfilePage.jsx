@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import RatingModal from '../components/RatingModal.jsx';
 import Button from '../components/Button.jsx';
+import Input from '../components/Input.jsx';
 import StarRatingDisplay from '../components/StarRatingDisplay.jsx';
+import ImageCropperModal from '../components/ImageCropperModal.jsx';
 import '../App.css';
-import { FaStar, FaEnvelope, FaUserCircle, FaHistory, FaCommentDots, FaArrowRight, FaCalendarAlt } from 'react-icons/fa';
+import { FaStar, FaEnvelope, FaUserCircle, FaHistory, FaCommentDots, FaArrowRight, FaCalendarAlt, FaCamera, FaTrashAlt, FaPhone } from 'react-icons/fa';
 
 function ProfilePage() {
   const [user, setUser] = useState(null);
@@ -14,6 +16,13 @@ function ProfilePage() {
   const [ratingsGiven, setRatingsGiven] = useState([]);
   const [selectedRideForRating, setSelectedRideForRating] = useState(null);
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({ name: '', phoneNumber: '' });
+
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -43,6 +52,113 @@ function ProfilePage() {
     fetchData();
   }, [fetchData]);
 
+  const handleEditClick = () => {
+    setFormData({
+      name: user.name,
+      phoneNumber: user.phoneNumber || '',
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancelClick = () => {
+    setIsEditing(false);
+  };
+
+  const handleFormChange = (event) => {
+    const { name, value } = event.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = async (event) => {
+    event.preventDefault();
+    const token = localStorage.getItem('token');
+    try {
+      const response = await axios.put('http://localhost:8080/api/employees/me', formData, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setUser(response.data);
+      setIsEditing(false);
+      alert('Profile updated successfully!');
+    } catch (error) {
+      alert('Failed to update profile. Please try again.');
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  const handleFileChange = (event) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => setImageToCrop(reader.result));
+      reader.readAsDataURL(event.target.files[0]);
+      setIsCropperOpen(true);
+      event.target.value = null;
+    }
+  };
+
+  const handleCropComplete = (imageElement, crop) => {
+    const canvas = document.createElement('canvas');
+    const scaleX = imageElement.naturalWidth / imageElement.width;
+    const scaleY = imageElement.naturalHeight / imageElement.height;
+    canvas.width = crop.width * scaleX;
+    canvas.height = crop.height * scaleY;
+    const ctx = canvas.getContext('2d');
+
+    ctx.drawImage(
+      imageElement,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width * scaleX,
+      crop.height * scaleY
+    );
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        console.error('Canvas is empty');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', blob, 'profile.jpg');
+      const token = localStorage.getItem('token');
+      try {
+        const response = await axios.post('http://localhost:8080/api/employees/me/profile-picture', formData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        setUser(response.data);
+        alert('Profile picture updated successfully!');
+      } catch (error) {
+        alert(error.response?.data?.message || 'Failed to upload profile picture.');
+      } finally {
+        setIsCropperOpen(false);
+      }
+    }, 'image/jpeg');
+  };
+
+  const handleChangePicture = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleRemovePicture = async () => {
+    if (window.confirm("Are you sure you want to remove your profile picture?")) {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await axios.delete('http://localhost:8080/api/employees/me/profile-picture', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setUser(response.data);
+            alert('Profile picture removed.');
+        } catch (error) {
+            alert('Failed to remove profile picture.');
+        }
+    }
+  };
+  
   const handleSubmitRating = async (ratingData) => {
     const token = localStorage.getItem('token');
     try {
@@ -53,8 +169,7 @@ function ProfilePage() {
       setSelectedRideForRating(null);
       fetchData();
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to submit rating.';
-      alert(errorMessage);
+      alert(error.response?.data?.message || 'Failed to submit rating.');
     }
   };
 
@@ -81,73 +196,151 @@ function ProfilePage() {
         <h1>My Profile</h1>
       </header>
       
-      <div className="profile-details">
-        <p><strong><FaUserCircle /> Name:</strong> {user.name}</p>
-        <p><strong><FaEnvelope /> Email:</strong> {user.email}</p>
-        <p><strong><FaStar /> Average Rating:</strong> {averageRating}</p>
+      <div className="profile-details-grid">
+        {isEditing ? (
+          <form onSubmit={handleFormSubmit} className="profile-edit-form">
+            <div className="profile-picture-edit-area">
+              {user.profilePictureUrl ? (
+                <img src={user.profilePictureUrl} alt="Profile" className="profile-picture" />
+              ) : (
+                <FaUserCircle size={120} className="profile-picture-placeholder" />
+              )}
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                style={{ display: 'none' }} 
+                accept="image/png, image/jpeg"
+              />
+              <div className="profile-picture-actions">
+                {user.profilePictureUrl ? (
+                  <>
+                    <Button type="button" onClick={handleChangePicture} className="secondary"><FaCamera /> Update</Button>
+                    <Button type="button" onClick={handleRemovePicture} className="secondary remove"><FaTrashAlt /> Remove</Button>
+                  </>
+                ) : (
+                  <Button type="button" onClick={handleChangePicture} className="secondary"><FaCamera /> Add Picture</Button>
+                )}
+              </div>
+            </div>
+            <div className="profile-fields-container">
+              <Input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleFormChange}
+                required
+              />
+              <Input
+                type="tel"
+                name="phoneNumber"
+                placeholder="Your Phone Number"
+                value={formData.phoneNumber}
+                onChange={handleFormChange}
+              />
+              <div className="profile-edit-buttons">
+                <Button type="button" onClick={handleCancelClick} className="secondary">Cancel</Button>
+                <Button type="submit">Save Changes</Button>
+              </div>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div className="profile-picture-container">
+              {user.profilePictureUrl ? (
+                <img src={user.profilePictureUrl} alt="Profile" className="profile-picture" />
+              ) : (
+                <FaUserCircle size={120} className="profile-picture-placeholder" />
+              )}
+            </div>
+            <div className="profile-display-info">
+              <div>
+                <p><strong><FaUserCircle /> Name:</strong> {user.name}</p>
+                <p><strong><FaEnvelope /> Email:</strong> {user.email}</p>
+                <p><strong><FaPhone /> Phone:</strong> {user.phoneNumber || 'Not provided'}</p>
+                <p><strong><FaStar /> Average Rating:</strong> {averageRating} {typeof averageRating === 'string' && !isNaN(averageRating) && <FaStar size={14} style={{ color: '#ffc107', marginLeft: '4px' }} />}</p>
+              </div>
+              <Button onClick={handleEditClick}>Edit Profile</Button>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="profile-content-grid">
         <div className="feedback-column">
           <h2><FaCommentDots /> Feedback Received</h2>
           <div className="ratings-list">
-            {myRatings.length > 0 ? myRatings.map(rating => (
-              <div key={rating.id} className="rating-card" style={{backgroundColor: 'var(--surface-color)', padding: '15px', borderRadius: 'var(--border-radius)', marginBottom: '10px', border: '1px solid var(--surface-color-light)'}}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '8px' }}>
-                  For ride: <strong>{rating.rideRequest.origin} <FaArrowRight size={10} /> {rating.rideRequest.destination}</strong>
-                </p>
-                <p><strong>"{rating.comment || 'No comment provided.'}"</strong></p>
-                {/* NEW: Added a footer to the rating card for metadata */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  <span>- Rated {rating.score}/5 by {rating.rater.name}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
-                    <FaCalendarAlt />
-                    {new Date(rating.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            )) : <p>You have not received any feedback yet.</p>}
+            {myRatings.length > 0 ? (
+              [...myRatings]
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .map(rating => (
+                  <div key={rating.id} className="rating-card" style={{backgroundColor: 'var(--surface-color)', padding: '15px', borderRadius: 'var(--border-radius)', marginBottom: '10px', border: '1px solid var(--surface-color-light)'}}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '8px' }}>
+                      For ride: <strong>{rating.rideRequest.origin} <FaArrowRight size={10} /> {rating.rideRequest.destination}</strong>
+                    </p>
+                    <p><strong>"{rating.comment || 'No comment provided.'}"</strong></p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                      <span>- Rated {rating.score}/5 by {rating.rater.name}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
+                        <FaCalendarAlt />
+                        {new Date(rating.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))
+            ) : (
+              <p>You have not received any feedback yet.</p>
+            )}
           </div>
         </div>
 
         <div className="history-column">
           <h2><FaHistory /> My Travel History</h2>
           <div className="ride-list">
-            {myRides.map(ride => {
-              const otherUsers = [];
-              if (ride.requester.id !== user.id) otherUsers.push(ride.requester);
-              if (ride.driver && ride.driver.id !== user.id) otherUsers.push(ride.driver);
-              ride.participants.forEach(p => {
-                  if(p.participant.id !== user.id) otherUsers.push(p.participant);
-              });
-              const uniqueRatees = [...new Map(otherUsers.map(item => [item['id'], item])).values()];
+            {[...myRides]
+              // --- THIS IS THE NEW FILTER LOGIC ---
+              .filter(ride => ride.rideType !== 'REQUESTED' || ride.driver)
+              .sort((a, b) => b.id - a.id)
+              .map(ride => {
+                const otherUsers = [];
+                if (ride.requester.id !== user.id) otherUsers.push(ride.requester);
+                if (ride.driver && ride.driver.id !== user.id) otherUsers.push(ride.driver);
+                ride.participants.forEach(p => {
+                    if(p.participant.id !== user.id) otherUsers.push(p.participant);
+                });
+                const uniqueRatees = [...new Map(otherUsers.map(item => [item['id'], item])).values()];
+                const hasDeparted = new Date(ride.travelDateTime) < new Date();
 
-              return (
-                <div key={ride.id} className="history-ride-card">
-                  <div className="history-ride-info">
-                    <p><strong>{ride.origin} to {ride.destination}</strong></p>
-                    <p style={{color: 'var(--text-secondary)'}}>Date: {new Date(ride.travelDateTime).toLocaleString()}</p>
+                return (
+                  <div key={ride.id} className="history-ride-card">
+                    <div className="history-ride-info">
+                      <p><strong>{ride.origin} to {ride.destination}</strong></p>
+                      <p style={{color: 'var(--text-secondary)'}}>Date: {new Date(ride.travelDateTime).toLocaleString()}</p>
+                    </div>
+                    <div className="history-ride-feedback">
+                      {uniqueRatees.length > 0 ? uniqueRatees.map(ratee => {
+                          const givenRating = findGivenRating(ride.id, ratee.id);
+                          return (
+                              <div key={ratee.id} className="feedback-item">
+                                  <span>Your Feedback for {ratee.name}:</span>
+                                  <div className="rating-display">
+                                  {givenRating ? (
+                                      <StarRatingDisplay score={givenRating.score} />
+                                  ) : (
+                                      hasDeparted ? (
+                                          <Button onClick={() => setSelectedRideForRating({ride, ratee})}>Rate</Button>
+                                      ) : (
+                                          <span className="rate-later-message">Rate after trip</span>
+                                      )
+                                  )}
+                                  </div>
+                              </div>
+                          )
+                      }) : <span style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>You were the only one on this ride.</span>}
+                    </div>
                   </div>
-                  <div className="history-ride-feedback">
-                    {uniqueRatees.length > 0 ? uniqueRatees.map(ratee => {
-                        const givenRating = findGivenRating(ride.id, ratee.id);
-                        return (
-                            <div key={ratee.id} className="feedback-item">
-                                <span>Your Feedback for {ratee.name}:</span>
-                                <div className="rating-display">
-                                {givenRating ? (
-                                    <StarRatingDisplay score={givenRating.score} />
-                                ) : (
-                                    <Button onClick={() => setSelectedRideForRating({ride, ratee})}>Rate</Button>
-                                )}
-                                </div>
-                            </div>
-                        )
-                    }) : <span style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>You were the only one on this ride.</span>}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       </div>
@@ -158,6 +351,14 @@ function ProfilePage() {
           ratee={selectedRideForRating.ratee}
           onClose={() => setSelectedRideForRating(null)}
           onSubmitRating={handleSubmitRating}
+        />
+      )}
+
+      {isCropperOpen && (
+        <ImageCropperModal
+          imageSrc={imageToCrop}
+          onClose={() => setIsCropperOpen(false)}
+          onCropComplete={handleCropComplete}
         />
       )}
     </div>
