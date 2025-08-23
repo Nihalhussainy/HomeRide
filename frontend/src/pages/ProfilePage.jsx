@@ -7,6 +7,7 @@ import Input from '../components/Input.jsx';
 import StarRatingDisplay from '../components/StarRatingDisplay.jsx';
 import ImageCropperModal from '../components/ImageCropperModal.jsx';
 import '../App.css';
+import { useNotification } from '../context/NotificationContext.jsx';
 import { FaStar, FaEnvelope, FaUserCircle, FaHistory, FaCommentDots, FaArrowRight, FaCalendarAlt, FaCamera, FaTrashAlt, FaPhone } from 'react-icons/fa';
 
 function ProfilePage() {
@@ -17,7 +18,7 @@ function ProfilePage() {
   const [selectedRideForRating, setSelectedRideForRating] = useState(null);
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-
+  const { showNotification, showConfirmation } = useNotification(); 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: '', phoneNumber: '' });
 
@@ -78,9 +79,10 @@ function ProfilePage() {
       });
       setUser(response.data);
       setIsEditing(false);
-      alert('Profile updated successfully!');
+      showNotification('Profile updated successfully!');
+      
     } catch (error) {
-      alert('Failed to update profile. Please try again.');
+      showNotification('Failed to update profile. Please try again.', 'error');
       console.error("Error updating profile:", error);
     }
   };
@@ -131,9 +133,9 @@ function ProfilePage() {
           }
         });
         setUser(response.data);
-        alert('Profile picture updated successfully!');
+        showNotification('Profile picture updated successfully!');
       } catch (error) {
-        alert(error.response?.data?.message || 'Failed to upload profile picture.');
+        showNotification('Failed to update profile. Please try again.', 'error');
       } finally {
         setIsCropperOpen(false);
       }
@@ -144,32 +146,33 @@ function ProfilePage() {
     fileInputRef.current.click();
   };
 
-  const handleRemovePicture = async () => {
-    if (window.confirm("Are you sure you want to remove your profile picture?")) {
+   const handleRemovePicture = () => {
+    showConfirmation("Are you sure you want to remove your profile picture?", async () => {
         const token = localStorage.getItem('token');
         try {
             const response = await axios.delete('http://localhost:8080/api/employees/me/profile-picture', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setUser(response.data);
-            alert('Profile picture removed.');
+            showNotification('Profile picture removed.'); // New notification
         } catch (error) {
-            alert('Failed to remove profile picture.');
+            showNotification('Failed to remove profile picture.', 'error'); // New notification
         }
-    }
+    });
   };
   
   const handleSubmitRating = async (ratingData) => {
     const token = localStorage.getItem('token');
     try {
       await axios.post('http://localhost:8080/api/ratings', ratingData, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` } 
       });
-      alert('Thank you for your feedback!');
+      showNotification('Thank you for your feedback!');
       setSelectedRideForRating(null);
       fetchData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to submit rating.');
+      showNotification(error.response?.data?.message || 'Failed to submit rating.', 'error');
+  
     }
   };
 

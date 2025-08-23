@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Input from './Input.jsx';
 import Button from './Button.jsx';
+import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
 import './RideRequestForm.css';
 import axios from 'axios';
 import { FaPlusCircle } from 'react-icons/fa';
@@ -16,16 +17,17 @@ function RideRequestForm({ onRideCreated }) {
   const [genderPreference, setGenderPreference] = useState('ALL');
 
   const [isLoading, setIsLoading] = useState(false);
+  const { showNotification } = useNotification(); // Use the hook
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('You must be logged in to post a ride.');
+      showNotification('You must be logged in to post a ride.', 'error');
       return;
     }
     if (!origin || !destination || !travelDateTime) {
-      alert('Please fill out all required fields.');
+      showNotification('Please fill out all required fields.', 'error');
       return;
     }
 
@@ -47,7 +49,7 @@ function RideRequestForm({ onRideCreated }) {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      alert(`Your ride has been posted successfully!`);
+      showNotification(`Your ride has been posted successfully!`);
       onRideCreated();
       
       setOrigin('');
@@ -58,7 +60,7 @@ function RideRequestForm({ onRideCreated }) {
       setGenderPreference('ALL');
 
     } catch (error) {
-      alert('Failed to post ride. Please try again.');
+      showNotification('Failed to post ride. Please try again.', 'error');
       console.error('Error posting ride:', error);
     } finally {
       setIsLoading(false);
@@ -140,7 +142,6 @@ function RideRequestForm({ onRideCreated }) {
           </select>
         </div>
 
-        {/* FIX: Added type="submit" to the button */}
         <Button type="submit" disabled={isLoading}>
           <FaPlusCircle />
           {isLoading ? 'Posting...' : 'Post Your Ride'}

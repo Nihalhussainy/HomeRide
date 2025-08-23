@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import './RideCard.css';
 import Button from './Button.jsx';
 import axios from 'axios';
+import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
 import { 
     FiCheckCircle, 
     FiClock, 
@@ -11,14 +12,15 @@ import {
     FiGitMerge,
     FiShield,
     FiTrash2,
-    FiAlertTriangle, // Icon for departed status
-    FiXCircle // Icon for cancelled status
+    FiAlertTriangle,
+    FiXCircle
 } from 'react-icons/fi';
 import { FaCar } from 'react-icons/fa';
 
 function RideCard({ ride, currentUser, onActionSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isActionDone, setIsActionDone] = useState(false);
+  const { showNotification, showConfirmation } = useNotification(); // Use the hook
 
   const participants = ride.participants || [];
 
@@ -29,19 +31,19 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
     return isParticipant || isDriver;
   }, [ride, currentUser, participants]);
 
-  const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this ride post?")) {
-        const token = localStorage.getItem('token');
-        try {
-            await axios.delete(`http://localhost:8080/api/rides/${ride.id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            alert("Ride deleted successfully.");
-            onActionSuccess();
-        } catch (error) {
-            alert("Failed to delete ride. You may not be authorized.");
-        }
-    }
+  const handleDelete = () => {
+    showConfirmation("Are you sure you want to delete this ride post?", async () => {
+      const token = localStorage.getItem('token');
+      try {
+          await axios.delete(`http://localhost:8080/api/rides/${ride.id}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+          });
+          showNotification("Ride deleted successfully.");
+          onActionSuccess();
+      } catch (error) {
+          showNotification("Failed to delete ride. You may not be authorized.", 'error');
+      }
+    });
   };
 
   const handleAction = async () => {
@@ -57,7 +59,7 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
       setTimeout(() => onActionSuccess(), 1500);
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Action failed.';
-      alert(errorMessage);
+      showNotification(errorMessage, 'error');
     } finally {
         setIsLoading(false);
     }
@@ -121,7 +123,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
         <div className="ride-actions">
           {isMyRide ? (
             pastRideStatus ? pastRideStatus : (
-              // --- THIS IS THE MODIFIED BUTTON ---
               <Button onClick={handleDelete} className="secondary">
                 <FiTrash2 />
               </Button>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import Input from '../components/Input.jsx';
+import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
 import '../App.css';
 import axios from 'axios';
 import { FiLogIn } from 'react-icons/fi';
@@ -12,6 +13,7 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { showNotification } = useNotification(); // Use the hook
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -25,6 +27,8 @@ function LoginPage() {
       const token = response.data.token;
       localStorage.setItem('token', token);
 
+      showNotification('Login successful!'); // New notification
+
       const decodedToken = jwtDecode(token);
       const userRole = decodedToken.role.replace('ROLE_', '');
 
@@ -35,7 +39,7 @@ function LoginPage() {
       }
 
     } catch (error) {
-      alert('Login failed. Please check your email and password.');
+      showNotification('Login failed. Please check your credentials.', 'error'); // New notification
       console.error('There was an error during login!', error);
     } finally {
       setIsLoading(false);
@@ -66,7 +70,6 @@ function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {/* FIX: Added type="submit" to the button */}
             <Button type="submit" disabled={isLoading}>
               <FiLogIn />
               {isLoading ? 'Logging In...' : 'Login'}

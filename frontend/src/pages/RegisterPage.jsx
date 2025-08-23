@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import Input from "../components/Input.jsx";
+import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
 import "../App.css";
 import axios from "axios";
 import { FiUserPlus } from "react-icons/fi";
@@ -13,11 +14,12 @@ function RegisterPage() {
   const [gender, setGender] = useState(""); 
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { showNotification } = useNotification(); // Use the hook
 
   const handleRegister = async (event) => {
     event.preventDefault();
     if (!gender) {
-      alert("Please select your gender.");
+      showNotification("Please select your gender.", 'error'); // New notification
       return;
     }
     setIsLoading(true);
@@ -29,12 +31,12 @@ function RegisterPage() {
         gender,
       });
 
-      alert("Registration successful! Please log in.");
+      showNotification("Registration successful! Please log in."); // New notification
       navigate("/login");
 
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
-      alert(errorMessage);
+      const errorMessage = error.response?.data || "Registration failed. Please try again.";
+      showNotification(errorMessage, 'error'); // New notification
       console.error("Registration error:", error);
     } finally {
       setIsLoading(false);
@@ -88,7 +90,6 @@ function RegisterPage() {
               </select>
             </div>
 
-            {/* FIX: Added type="submit" to the button */}
             <Button type="submit" disabled={isLoading}>
               <FiUserPlus />
               {isLoading ? 'Creating Account...' : 'Register'}

@@ -1,14 +1,15 @@
 import React from 'react';
-// Use NavLink for active styling
 import { NavLink, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
 import './Navbar.css';
-import { FaCarSide } from 'react-icons/fa'; // Import a car icon
+import { FaCarSide } from 'react-icons/fa';
 
 function Navbar() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  
+  const { showConfirmation } = useNotification(); // Use the hook
+
   let userRole = null;
   if (token) {
     try {
@@ -21,10 +22,10 @@ function Navbar() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    // We don't need an alert, the redirect is enough feedback
-    navigate('/login');
-    // No need to force reload, React Router handles the state change
+    showConfirmation('Are you sure you want to logout?', () => {
+      localStorage.removeItem('token');
+      navigate('/login');
+    });
   };
 
   return (
