@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Input from './Input.jsx';
 import Button from './Button.jsx';
-import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
+import { useNotification } from '../context/NotificationContext.jsx';
 import './RideRequestForm.css';
 import axios from 'axios';
 import { FaPlusCircle } from 'react-icons/fa';
@@ -17,17 +17,34 @@ function RideRequestForm({ onRideCreated }) {
   const [genderPreference, setGenderPreference] = useState('ALL');
 
   const [isLoading, setIsLoading] = useState(false);
-  const { showNotification } = useNotification(); // Use the hook
+  const { showNotification } = useNotification();
+
+  // --- NEW: Function to get the current time as a string for the input's min attribute ---
+  const getNowString = () => {
+    const now = new Date();
+    // Adjust for the local timezone offset
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    // Format to the 'YYYY-MM-DDTHH:mm' string required by the input
+    return now.toISOString().slice(0, 16);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const token = localStorage.getItem('token');
+    
     if (!token) {
       showNotification('You must be logged in to post a ride.', 'error');
       return;
     }
     if (!origin || !destination || !travelDateTime) {
       showNotification('Please fill out all required fields.', 'error');
+      return;
+    }
+
+    // --- NEW: Add a final validation check for the date and time ---
+    const selectedDate = new Date(travelDateTime);
+    if (selectedDate < new Date()) {
+      showNotification('You cannot schedule a ride for a past date or time.', 'error');
       return;
     }
 
@@ -106,6 +123,7 @@ function RideRequestForm({ onRideCreated }) {
           value={travelDateTime}
           onChange={(e) => setTravelDateTime(e.target.value)}
           required
+          min={getNowString()} // --- THIS IS THE NEW ATTRIBUTE ---
         />
 
         {rideType === 'OFFERED' && (

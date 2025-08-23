@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import './RideCard.css';
 import Button from './Button.jsx';
 import axios from 'axios';
-import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
+import { useNotification } from '../context/NotificationContext.jsx';
 import { 
     FiCheckCircle, 
     FiClock, 
@@ -15,12 +15,12 @@ import {
     FiAlertTriangle,
     FiXCircle
 } from 'react-icons/fi';
-import { FaCar } from 'react-icons/fa';
+import { FaCar, FaUserCircle } from 'react-icons/fa'; // Import FaUserCircle for placeholder
 
 function RideCard({ ride, currentUser, onActionSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isActionDone, setIsActionDone] = useState(false);
-  const { showNotification, showConfirmation } = useNotification(); // Use the hook
+  const { showNotification, showConfirmation } = useNotification();
 
   const participants = ride.participants || [];
 
@@ -151,22 +151,45 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
           <strong><FiUsers /> 
             {ride.rideType === 'OFFERED' ? ' People in Car:' : ' People in Group:'}
           </strong>
+            {/* --- THIS IS THE UPDATED SECTION WITH PICTURES --- */}
             <div className="participants-pills">
               {ride.rideType === 'OFFERED' && (
                 <span className="participant-pill driver">
+                  {ride.requester.profilePictureUrl ? (
+                    <img src={ride.requester.profilePictureUrl} alt={ride.requester.name} />
+                  ) : (
+                    <FaUserCircle className="participant-icon" />
+                  )}
                   {ride.requester.name} (Driver)
                 </span>
               )}
               {ride.rideType === 'REQUESTED' && (
                  <span className="participant-pill">
+                   {ride.requester.profilePictureUrl ? (
+                    <img src={ride.requester.profilePictureUrl} alt={ride.requester.name} />
+                  ) : (
+                    <FaUserCircle className="participant-icon" />
+                  )}
                   {ride.requester.name} (Requester)
                 </span>
               )}
               {participants.map(p => (
-                <span key={p.id} className="participant-pill">{p.participant.name}</span>
+                <span key={p.id} className="participant-pill">
+                  {p.participant.profilePictureUrl ? (
+                    <img src={p.participant.profilePictureUrl} alt={p.participant.name} />
+                  ) : (
+                    <FaUserCircle className="participant-icon" />
+                  )}
+                  {p.participant.name}
+                </span>
               ))}
               {isDriverFound && (
                  <span className="participant-pill driver">
+                   {ride.driver.profilePictureUrl ? (
+                    <img src={ride.driver.profilePictureUrl} alt={ride.driver.name} />
+                  ) : (
+                    <FaUserCircle className="participant-icon" />
+                  )}
                   {ride.driver.name} (Driver)
                 </span>
               )}

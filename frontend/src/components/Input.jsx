@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Input.css';
 import { FiEye, FiEyeOff } from 'react-icons/fi'; // Import eye icons
 
-function Input({ type, placeholder, value, onChange, ...props }) {
+function Input({ type, placeholder, value, onChange, min, ...props }) { // Add 'min' prop here
   // State to manage password visibility
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -21,6 +21,7 @@ function Input({ type, placeholder, value, onChange, ...props }) {
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        min={min} // Pass the min prop to the input element
         {...props}
       />
       {/* Only show the icon if the original type was "password" */}

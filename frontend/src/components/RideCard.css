@@ -182,4 +182,24 @@
   font-weight: 600;
   font-style: italic;
 }
+/* Add these new rules to src/components/RideCard.css */
+
+.participant-pill {
+  /* ... (existing styles) ... */
+  display: inline-flex; /* This is new */
+  align-items: center; /* This is new */
+  gap: 8px; /* This is new */
+}
+
+.participant-pill img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.participant-icon {
+  font-size: 24px;
+  color: var(--text-secondary);
+}
 
