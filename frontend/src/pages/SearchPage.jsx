@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'; // ✅ added useRef
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FiSearch, FiCalendar, FiUsers, FiPlus, FiMinus, FiMapPin, FiArrowRight, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import Input from '../components/Input.jsx';
@@ -23,7 +23,8 @@ function SearchPage() {
     const [rideType, setRideType] = useState(searchParams.get('rideType') || 'all');
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-    const resultsRef = useRef(null); // ✅ create ref for rides section
+    const resultsRef = useRef(null);
+    const navigate = useNavigate();
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -41,7 +42,6 @@ function SearchPage() {
             setRides(response.data);
             setSearchPerformed(true);
 
-            // ✅ Scroll into view after results load
             setTimeout(() => {
                 if (resultsRef.current) {
                     resultsRef.current.scrollIntoView({ behavior: "smooth" });
@@ -97,10 +97,14 @@ function SearchPage() {
     if (value >= 1 && value <= 8) {
         setPassengerCount(value);
     }
-};
+    };
 
     const getPassengerText = () =>
         `${passengerCount} Passenger${passengerCount > 1 ? 's' : ''}`;
+
+    const handleOfferRide = () => {
+        navigate('/dashboard');
+    };
 
     return (
         <div className="main-container">
@@ -201,15 +205,14 @@ function SearchPage() {
                                             <FiMinus />
                                         </button>
                                         <button
-    type="button"
-    className="counter-btn"
-    onClick={() => handlePassengerCountChange(passengerCount + 1)}
-    disabled={passengerCount >= 8}   // ✅ disable when at 8
-    aria-label="Increase passenger count"
->
-    <FiPlus />
-</button>
-
+                                            type="button"
+                                            className="counter-btn"
+                                            onClick={() => handlePassengerCountChange(passengerCount + 1)}
+                                            disabled={passengerCount >= 8}
+                                            aria-label="Increase passenger count"
+                                        >
+                                            <FiPlus />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -236,7 +239,6 @@ function SearchPage() {
                 </form>
             </div>
 
-            {/* ✅ Add ref here */}
             <div className="search-results-section" ref={resultsRef}>
                 {isLoading ? (
                     <div className="loading-state">
@@ -257,6 +259,11 @@ function SearchPage() {
                             <br />
                             Try adjusting your search criteria or check back later.
                         </p>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+                             <Button onClick={handleOfferRide} className="search-btn-primary">
+                                Offer a Ride
+                             </Button>
+                        </div>
                     </div>
                 ) : rides.length > 0 ? (
                     <div className="results-container">
