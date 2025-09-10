@@ -48,12 +48,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/rides/**").authenticated() // ADDED: Allow authenticated users to GET ride data
+                        .requestMatchers(HttpMethod.POST, "/api/rides/request").authenticated() // ADDED: Allow authenticated users to POST new ride requests
                         .requestMatchers(HttpMethod.DELETE, "/api/rides/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/employees/me/profile-picture").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/employees/me/profile-picture").authenticated()
-                        // --- NEW SECURITY RULE ---
-                        // Allow PUT requests to the user's own profile endpoint.
                         .requestMatchers(HttpMethod.PUT, "/api/employees/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/rides/{rideId}/join").authenticated() // ADDED: Allow authenticated users to join a ride
+                        .requestMatchers(HttpMethod.POST, "/api/rides/{rideId}/accept").authenticated() // ADDED: Allow authenticated users to accept a ride
+                        .requestMatchers(HttpMethod.GET, "/api/rides/my-rides").authenticated() // ADDED: Allow authenticated users to view their own rides
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

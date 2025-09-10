@@ -1,5 +1,18 @@
 package com.homeride.backend.controller;
 import com.homeride.backend.dto.RideRequestDTO;
+import com.homeride.backend.dto.SearchRequestDTO; // Add this line
+import com.homeride.backend.model.RideParticipant;
+import com.homeride.backend.model.RideRequest;
+import com.homeride.backend.service.RideRequestService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.security.Principal;
+import java.util.List;
+import java.time.LocalDateTime;
+
+// ... (rest of the code)
+import com.homeride.backend.dto.RideRequestDTO;
 import com.homeride.backend.model.RideParticipant;
 import com.homeride.backend.model.RideRequest;
 import com.homeride.backend.service.RideRequestService;
@@ -24,13 +37,14 @@ public class RideRequestController {
         return ResponseEntity.ok(newRideRequest);
     }
     @GetMapping
-    public ResponseEntity<List<RideRequest>> getAllRides(
-            @RequestParam(required = false) String origin,
-            @RequestParam(required = false) String destination,
-            @RequestParam(required = false) LocalDateTime travelDateTime, // NEW
-            @RequestParam(required = false) Integer passengerCount // NEW
-    ) {
-        List<RideRequest> rides = rideRequestService.getAllRideRequests(origin, destination, travelDateTime, passengerCount);
+    public ResponseEntity<List<RideRequest>> getAllRides(SearchRequestDTO searchRequest) {
+        List<RideRequest> rides = rideRequestService.getAllRideRequests(
+                searchRequest.getOrigin(),
+                searchRequest.getDestination(),
+                searchRequest.getTravelDateTime(),
+                searchRequest.getPassengerCount(),
+                searchRequest.getRideType()
+        );
         return ResponseEntity.ok(rides);
     }
     @PostMapping("/{rideId}/join")

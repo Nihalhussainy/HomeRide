@@ -231,3 +231,47 @@
     .passenger-counter { height: 44px !important; padding: 0 0.5rem; }
     .counter-btn { width: 26px; height: 26px; font-size: 0.75rem; }
 }
+/* Add a new class for the dropdown container */
+.ride-type-dropdown {
+    width: 100%;
+    position: relative;
+}
+
+/* Style the select element to match the inputs */
+.ride-type-select {
+    width: 100%;
+    padding: 0.875rem 1rem !important;
+    font-size: 1rem !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--border-radius) !important;
+    background: var(--background-color) !important;
+    color: var(--text-primary) !important;
+    transition: all 0.2s ease !important;
+    height: 48px !important;
+    box-sizing: border-box !important;
+    appearance: none; /* Removes default dropdown arrow */
+    cursor: pointer;
+}
+
+.ride-type-select:focus {
+    outline: none !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1) !important;
+}
+
+/* Add a custom dropdown arrow icon */
+.ride-type-dropdown::after {
+    content: '▼';
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; /* Prevents icon from blocking clicks */
+}
+
+/* Hide the radio button options */
+.ride-type-options {
+    display: none;
+}

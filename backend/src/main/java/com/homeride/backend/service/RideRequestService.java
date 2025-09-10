@@ -1,5 +1,6 @@
 package com.homeride.backend.service;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 import com.homeride.backend.dto.RideRequestDTO;
 import com.homeride.backend.model.Employee;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.jpa.domain.Specification; // Import Specification
+import org.springframework.data.jpa.domain.Specification;
 @Service
 public class RideRequestService {
     private static final Logger logger = LoggerFactory.getLogger(RideRequestService.class);
@@ -28,23 +29,39 @@ public class RideRequestService {
         this.employeeRepository = employeeRepository;
         this.rideParticipantRepository = rideParticipantRepository;
     }
-    public List<RideRequest> getAllRideRequests(String origin, String destination, LocalDateTime travelDateTime, Integer passengerCount) {
+    // Updated method signature with LocalDate
+    public List<RideRequest> getAllRideRequests(String origin, String destination, LocalDate travelDate, Integer passengerCount, String rideType) {
         Specification<RideRequest> spec = Specification.not(null);
+        // Apply common filters first
         if (origin != null && !origin.trim().isEmpty()) {
             spec = spec.and(RideRequestRepository.Ridespecs.hasOrigin(origin));
         }
         if (destination != null && !destination.trim().isEmpty()) {
             spec = spec.and(RideRequestRepository.Ridespecs.hasDestination(destination));
         }
-        // NEW: Filter by travel date
-        if (travelDateTime != null) {
-            spec = spec.and(RideRequestRepository.Ridespecs.isAfterDate(travelDateTime));
+        // Handle date filtering correctly by converting LocalDate to a LocalDateTime range
+        if (travelDate != null) {
+            LocalDateTime startOfDay = travelDate.atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1).minusNanos(1);
+            spec = spec.and((root, query, cb) -> cb.between(root.get("travelDateTime"), startOfDay, endOfDay));
         }
-        // NEW: Filter by passenger count and available seats
-        if (passengerCount != null && passengerCount > 0) {
-            // This filter looks for rides that are offers (have a vehicleCapacity)
-            // AND have enough capacity for the requested number of passengers.
-            spec = spec.and(RideRequestRepository.Ridespecs.hasCapacityFor(passengerCount));
+        // Apply rideType-specific filters
+        if ("offered".equalsIgnoreCase(rideType)) {
+            spec = spec.and(RideRequestRepository.Ridespecs.isOfferedRide());
+            if (passengerCount != null && passengerCount > 0) {
+                spec = spec.and(RideRequestRepository.Ridespecs.hasCapacityFor(passengerCount));
+            }
+        } else if ("requested".equalsIgnoreCase(rideType)) {
+            spec = spec.and(RideRequestRepository.Ridespecs.isRequestedRide());
+            // You can add more specific filters for requested rides here if needed
+        } else { // This handles "all" or null/empty rideType
+            // Create a compound specification to search for both offered and requested rides
+            Specification<RideRequest> offeredSpec = RideRequestRepository.Ridespecs.isOfferedRide();
+            if (passengerCount != null && passengerCount > 0) {
+                offeredSpec = offeredSpec.and(RideRequestRepository.Ridespecs.hasCapacityFor(passengerCount));
+            }
+            Specification<RideRequest> requestedSpec = RideRequestRepository.Ridespecs.isRequestedRide();
+            spec = spec.and(Specification.anyOf(offeredSpec, requestedSpec));
         }
         // Always filter out old rides
         spec = spec.and(RideRequestRepository.Ridespecs.isAfterCutoffTime(LocalDateTime.now().minusHours(12)));
