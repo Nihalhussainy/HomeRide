@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react'; // ✅ added useRef
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { FiSearch, FiCalendar, FiUsers, FiPlus, FiMinus, FiMapPin, FiArrowRight } from 'react-icons/fi';
+import { FiSearch, FiCalendar, FiUsers, FiPlus, FiMinus, FiMapPin, FiArrowRight, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
 import RideCard from '../components/RideCard.jsx';
@@ -20,7 +20,10 @@ function SearchPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [searchPerformed, setSearchPerformed] = useState(false);
     const { showNotification } = useNotification();
-    const [rideType, setRideType] = useState(searchParams.get('rideType') || 'offered');
+    const [rideType, setRideType] = useState(searchParams.get('rideType') || 'all');
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+    const resultsRef = useRef(null); // ✅ create ref for rides section
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -37,6 +40,14 @@ function SearchPage() {
             });
             setRides(response.data);
             setSearchPerformed(true);
+
+            // ✅ Scroll into view after results load
+            setTimeout(() => {
+                if (resultsRef.current) {
+                    resultsRef.current.scrollIntoView({ behavior: "smooth" });
+                }
+            }, 300);
+
         } catch (error) {
             console.error('Failed to fetch search results:', error);
             if (error.response && error.response.status === 403) {
@@ -70,7 +81,7 @@ function SearchPage() {
         setDestination('');
         setTravelDateTime('');
         setPassengerCount(1);
-        setRideType('offered');
+        setRideType('all');
         setSearchParams({});
         setRides([]);
         setSearchPerformed(false);
@@ -83,8 +94,10 @@ function SearchPage() {
     };
 
     const handlePassengerCountChange = (value) => {
-        if (value >= 1) setPassengerCount(value);
-    };
+    if (value >= 1 && value <= 8) {
+        setPassengerCount(value);
+    }
+};
 
     const getPassengerText = () =>
         `${passengerCount} Passenger${passengerCount > 1 ? 's' : ''}`;
@@ -97,7 +110,8 @@ function SearchPage() {
             </header>
             <div className="search-form-wrapper">
                 <form onSubmit={handleSearch} className="enhanced-search-form" noValidate>
-                    <div className="search-fields-grid">
+                    {/* Primary Search Fields */}
+                    <div className="search-fields-primary">
                         <div className="search-field-group">
                             <label className="field-label">
                                 <FiMapPin className="label-icon" />
@@ -137,58 +151,14 @@ function SearchPage() {
                                 className="search-input date-input"
                             />
                         </div>
-                        <div className="search-field-group">
-                            <label className="field-label">
-                                <FiUsers className="label-icon" />
-                                Passengers
-                            </label>
-                            <div className="passenger-counter">
-                                <span className="passenger-display">{getPassengerText()}</span>
-                                <div className="counter-buttons">
-                                    <button
-                                        type="button"
-                                        className="counter-btn"
-                                        onClick={() => handlePassengerCountChange(passengerCount - 1)}
-                                        disabled={passengerCount <= 1}
-                                        aria-label="Decrease passenger count"
-                                    >
-                                        <FiMinus />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="counter-btn"
-                                        onClick={() => handlePassengerCountChange(passengerCount + 1)}
-                                        aria-label="Increase passenger count"
-                                    >
-                                        <FiPlus />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        {/* Replaced radio buttons with a dropdown */}
-                        <div className="search-field-group">
-                            <label className="field-label">
-                                <FiArrowRight className="label-icon" />
-                                Ride Type
-                            </label>
-                            <div className="ride-type-dropdown">
-                                <select
-                                    className="ride-type-select"
-                                    value={rideType}
-                                    onChange={(e) => setRideType(e.target.value)}
-                                >
-                                    <option value="offered">Offered</option>
-                                    <option value="requested">Requested</option>
-                                    <option value="all">All</option>
-                                </select>
-                            </div>
-                        </div>
                     </div>
-                    <div className="search-actions">
+
+                    {/* Search & Reset Buttons Below */}
+                    <div className="search-actions-bottom">
                         <Button
                             type="submit"
                             disabled={isLoading}
-                            className="search-btn primary"
+                            className="search-btn-primary"
                         >
                             <FiSearch className="btn-icon" />
                             {isLoading ? 'Searching...' : 'Search Rides'}
@@ -196,15 +166,78 @@ function SearchPage() {
                         <Button
                             type="button"
                             onClick={handleReset}
-                            className="reset-btn secondary"
+                            className="reset-btn-secondary"
                             disabled={isLoading}
                         >
                             Reset
                         </Button>
                     </div>
+
+                    {/* Advanced Filters Section */}
+                    <div className="advanced-filter-toggle">
+                        <button type="button" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}>
+                            {showAdvancedFilters ? <FiChevronUp /> : <FiChevronDown />}
+                            {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
+                        </button>
+                    </div>
+
+                    {showAdvancedFilters && (
+                        <div className="search-fields-advanced">
+                            <div className="search-field-group">
+                                <label className="field-label">
+                                    <FiUsers className="label-icon" />
+                                    Passengers
+                                </label>
+                                <div className="passenger-counter">
+                                    <span className="passenger-display">{getPassengerText()}</span>
+                                    <div className="counter-buttons">
+                                        <button
+                                            type="button"
+                                            className="counter-btn"
+                                            onClick={() => handlePassengerCountChange(passengerCount - 1)}
+                                            disabled={passengerCount <= 1}
+                                            aria-label="Decrease passenger count"
+                                        >
+                                            <FiMinus />
+                                        </button>
+                                        <button
+    type="button"
+    className="counter-btn"
+    onClick={() => handlePassengerCountChange(passengerCount + 1)}
+    disabled={passengerCount >= 8}   // ✅ disable when at 8
+    aria-label="Increase passenger count"
+>
+    <FiPlus />
+</button>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="search-field-group">
+                                <label className="field-label">
+                                    <FiArrowRight className="label-icon" />
+                                    Ride Type
+                                </label>
+                                <div className="ride-type-dropdown">
+                                    <select
+                                        className="ride-type-select"
+                                        value={rideType}
+                                        onChange={(e) => setRideType(e.target.value)}
+                                    >
+                                        <option value="all">All</option>
+                                        <option value="offered">Offered</option>
+                                        <option value="requested">Requested</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </form>
             </div>
-            <div className="search-results-section">
+
+            {/* ✅ Add ref here */}
+            <div className="search-results-section" ref={resultsRef}>
                 {isLoading ? (
                     <div className="loading-state">
                         <div className="loading-spinner"></div>
