@@ -4,10 +4,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 1.25rem 2.5rem;
   background-color: var(--surface-color);
   border-bottom: 1px solid var(--surface-color-light);
-  height: 70px;
+  height: 80px;
   box-sizing: border-box;
 }
 
@@ -48,6 +48,13 @@
 .nav-links a.active {
     color: var(--primary-color);
     font-weight: 600;
+}
+
+/* New styles for the search link */
+.search-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .logout-button {

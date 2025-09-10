@@ -1,14 +1,15 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
+import { useNotification } from '../context/NotificationContext.jsx';
 import './Navbar.css';
 import { FaCarSide } from 'react-icons/fa';
+import { FiSearch } from 'react-icons/fi';
 
 function Navbar() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const { showConfirmation } = useNotification(); // Use the hook
+  const { showConfirmation } = useNotification();
 
   let userRole = null;
   if (token) {
@@ -38,10 +39,15 @@ function Navbar() {
         {token ? (
           <>
             <NavLink to="/dashboard">Dashboard</NavLink>
-            <NavLink to="/profile">My Profile</NavLink>
+            <NavLink to="/search" className="search-link">
+              <FiSearch size={20} />
+              <span>Search</span>
+            </NavLink>
+            {/* The Admin Panel link is now before My Profile */}
             {userRole === 'ADMIN' && (
               <NavLink to="/admin">Admin Panel</NavLink>
             )}
+            <NavLink to="/profile">My Profile</NavLink>
             <button onClick={handleLogout} className="logout-button">Logout</button>
           </>
         ) : (

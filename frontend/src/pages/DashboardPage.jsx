@@ -22,7 +22,10 @@ function DashboardPage() {
     }
 
     try {
-      const config = { headers: { 'Authorization': `Bearer ${token}` } };
+      const config = { 
+        headers: { 'Authorization': `Bearer ${token}` }
+      };
+      
       const [userResponse, ridesResponse] = await Promise.all([
         axios.get('http://localhost:8080/api/employees/me', config),
         axios.get('http://localhost:8080/api/rides', config)
@@ -44,14 +47,13 @@ function DashboardPage() {
     fetchData(true);
   }, [fetchData]);
 
-  // --- SORTING LOGIC ADDED HERE ---
   const offeredRides = rides
     .filter(ride => ride.rideType === 'OFFERED')
-    .sort((a, b) => b.id - a.id); // Sort by ID descending (newest first)
+    .sort((a, b) => b.id - a.id);
 
   const requestedRides = rides
     .filter(ride => ride.rideType === 'REQUESTED')
-    .sort((a, b) => b.id - a.id); // Sort by ID descending (newest first)
+    .sort((a, b) => b.id - a.id);
 
   return (
     <div className="main-container">

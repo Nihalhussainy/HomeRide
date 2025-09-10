@@ -4,14 +4,15 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import SearchPage from './pages/SearchPage.jsx';
 import Navbar from './components/Navbar.jsx';
 import RouteGuard from './components/RouteGuard.jsx';
-import { NotificationProvider } from './context/NotificationContext.jsx'; // Import the provider
+import { NotificationProvider } from './context/NotificationContext.jsx';
 import './App.css';
 
 function App() {
   return (
-    <NotificationProvider> {/* Wrap the app with the provider */}
+    <NotificationProvider>
       <div>
         <Navbar />
         <Routes>
@@ -28,6 +29,11 @@ function App() {
           <Route 
             path="/profile" 
             element={<RouteGuard><ProfilePage /></RouteGuard>} 
+          />
+          {/* NEW: Route for the dedicated Search page */}
+          <Route 
+            path="/search" 
+            element={<RouteGuard><SearchPage /></RouteGuard>} 
           />
 
           {/* Protected Route exclusively for Admins */}
