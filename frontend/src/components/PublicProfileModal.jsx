@@ -4,7 +4,7 @@ import Button from './Button.jsx';
 import StarRatingDisplay from './StarRatingDisplay.jsx';
 import '../App.css';
 import './RatingModal.css';
-import './PublicProfileModal.css'; // NEW: Import modal-specific styles
+import './PublicProfileModal.css';
 import { FaUserCircle, FaEnvelope, FaStar, FaCarSide, FaCommentDots, FaArrowRight, FaCalendarAlt } from 'react-icons/fa';
 import { useNotification } from '../context/NotificationContext.jsx';
 
@@ -58,6 +58,9 @@ function PublicProfileModal({ userId, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>User Profile</h2>
+        </div>
         
         <div className="profile-summary">
           <div className="profile-summary-picture">
@@ -73,7 +76,7 @@ function PublicProfileModal({ userId, onClose }) {
             <p>
               <strong><FaStar /> Avg Rating:</strong> {profile.averageRating ? profile.averageRating.toFixed(1) : 'N/A'} {profile.averageRating && <FaStar size={14} style={{ color: '#ffc107', marginLeft: '4px' }} />}
             </p>
-            <p><strong><FaCarSide /> Total Rides:</strong> {profile.totalRides}</p>
+            <p><strong><FaCarSide /> Rides:</strong> {profile.totalRides}</p>
           </div>
         </div>
 

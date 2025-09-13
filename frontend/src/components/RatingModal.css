@@ -16,13 +16,16 @@
 }
 
 .modal-content {
-  background: var(--surface-color);
-  padding: 30px;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--surface-color-light);
+  background: linear-gradient(145deg, var(--surface-color), var(--surface-color-light));
+  padding: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   width: 90%;
-  max-width: 500px;
-  box-shadow: var(--card-shadow);
+  max-width: 700px; /* UPDATED: Increased max-width for a broader modal */
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.2),
+    0 10px 30px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   transform: scale(0.95);
   animation: scaleIn 0.3s ease forwards;
 }
