@@ -9,6 +9,7 @@ import Navbar from './components/Navbar.jsx';
 import RouteGuard from './components/RouteGuard.jsx';
 import { NotificationProvider } from './context/NotificationContext.jsx';
 import './App.css';
+// REMOVED: import PublicProfilePage from './pages/PublicProfilePage.jsx';
 
 function App() {
   return (
@@ -30,17 +31,18 @@ function App() {
             path="/profile" 
             element={<RouteGuard><ProfilePage /></RouteGuard>} 
           />
-          {/* NEW: Route for the dedicated Search page */}
           <Route 
             path="/search" 
             element={<RouteGuard><SearchPage /></RouteGuard>} 
           />
-
+        
           {/* Protected Route exclusively for Admins */}
           <Route 
             path="/admin" 
             element={<RouteGuard adminOnly={true}><AdminDashboardPage /></RouteGuard>} 
           />
+          {/* REMOVED: The old public profile route */}
+          {/* <Route path="/profile/:id" element={<PublicProfilePage />} /> */}
         </Routes>
       </div>
     </NotificationProvider>

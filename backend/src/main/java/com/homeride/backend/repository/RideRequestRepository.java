@@ -15,6 +15,7 @@ import java.util.List;
 @Repository
 public interface RideRequestRepository extends JpaRepository<RideRequest, Long>, JpaSpecificationExecutor<RideRequest> {
     long countByRequester(Employee requester);
+    long countByDriver(Employee driver);
 
     @Query("SELECT r FROM RideRequest r WHERE r.travelDateTime > :cutoffTime")
     List<RideRequest> findActiveRides(@Param("cutoffTime") LocalDateTime cutoffTime);

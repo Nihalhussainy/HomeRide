@@ -102,4 +102,8 @@ public class EmployeeService implements UserDetailsService {
         }
         return employeeRepository.save(employee);
     }
+    public Employee findEmployeeById(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+    }
 }

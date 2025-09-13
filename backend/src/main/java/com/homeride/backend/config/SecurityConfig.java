@@ -57,7 +57,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/rides/{rideId}/join").authenticated() // ADDED: Allow authenticated users to join a ride
                         .requestMatchers(HttpMethod.POST, "/api/rides/{rideId}/accept").authenticated() // ADDED: Allow authenticated users to accept a ride
                         .requestMatchers(HttpMethod.GET, "/api/rides/my-rides").authenticated() // ADDED: Allow authenticated users to view their own rides
+                        .requestMatchers(HttpMethod.GET, "/api/employees/{id}").permitAll()
                         .anyRequest().authenticated()
+
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

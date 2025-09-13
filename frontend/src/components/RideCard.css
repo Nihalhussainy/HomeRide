@@ -202,4 +202,22 @@
   font-size: 24px;
   color: var(--text-secondary);
 }
+/* Update the existing rules to improve the hover effect */
+.participant-pill,
+.ride-info .info-item:nth-child(2) {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
 
+.participant-pill:hover {
+    /* Changes background to a lighter surface color and adds a subtle lift */
+    background-color: var(--surface-color-light);
+    transform: translateY(-2px);
+}
+
+.participant-pill.driver:hover {
+    /* Keeps the special driver color but adds the same lift */
+    background-color: #3b82f6;
+    transform: translateY(-2px);
+    opacity: 0.9;
+}

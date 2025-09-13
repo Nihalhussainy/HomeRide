@@ -35,8 +35,9 @@ public class AnalyticsService {
         List<Employee> employees = employeeRepository.findAll();
         return employees.stream().map(employee -> {
             long ridesAsRequester = rideRequestRepository.countByRequester(employee);
+            long ridesAsDriver = rideRequestRepository.countByDriver(employee);
             long ridesAsParticipant = rideParticipantRepository.countByParticipant(employee);
-            return AdminEmployeeViewDTO.from(employee, ridesAsRequester + ridesAsParticipant);
+            return AdminEmployeeViewDTO.from(employee, ridesAsRequester + ridesAsDriver + ridesAsParticipant);
         }).collect(Collectors.toList());
     }
 }

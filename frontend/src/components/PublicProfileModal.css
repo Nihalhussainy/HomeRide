@@ -1,0 +1,107 @@
+/* src/components/PublicProfileModal.css */
+
+.profile-summary {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background-color: var(--surface-color-light);
+    border: 1px solid var(--surface-color-light);
+    border-radius: var(--border-radius);
+    padding: 24px;
+}
+
+.profile-summary-picture {
+    flex-shrink: 0;
+}
+
+.profile-summary-picture .profile-picture {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-summary-picture .profile-picture-placeholder {
+    width: 96px;
+    height: 96px;
+    color: var(--text-secondary);
+}
+
+.profile-summary-info p {
+    margin: 8px 0;
+    font-size: 0.95rem;
+}
+
+.profile-summary-info p strong {
+    color: var(--text-secondary);
+}
+
+.profile-summary-info p svg {
+    margin-right: 8px;
+    color: var(--text-secondary);
+}
+
+.feedback-section {
+    margin-top: 24px;
+}
+
+.feedback-section h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.feedback-section h2 svg {
+    color: var(--text-secondary);
+}
+
+.ratings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.feedback-card {
+    background-color: var(--surface-color);
+    border: 1px solid var(--surface-color-light);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    transition: all 0.2s ease-in-out;
+}
+
+.feedback-card:hover {
+    transform: translateY(-2px);
+}
+
+.feedback-origin-destination {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin: 0 0 8px 0;
+}
+
+.feedback-comment {
+    font-weight: 500;
+    margin: 0 0 12px 0;
+    line-height: 1.5;
+}
+
+.feedback-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.no-feedback-message {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 20px;
+}

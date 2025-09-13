@@ -1,14 +1,15 @@
 package com.homeride.backend.controller;
 
+import com.homeride.backend.dto.PublicProfileDTO; // NEW IMPORT
 import com.homeride.backend.dto.UserProfileUpdateDTO;
 import com.homeride.backend.model.Employee;
 import com.homeride.backend.service.EmployeeService;
+import com.homeride.backend.service.PublicProfileService; // NEW IMPORT
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.security.Principal;
 import java.util.Map;
 
@@ -17,10 +18,12 @@ import java.util.Map;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+    private final PublicProfileService publicProfileService; // NEW FIELD
 
     @Autowired
-    public EmployeeController(EmployeeService employeeService) {
+    public EmployeeController(EmployeeService employeeService, PublicProfileService publicProfileService) { // NEW CONSTRUCTOR PARAMETER
         this.employeeService = employeeService;
+        this.publicProfileService = publicProfileService;
     }
 
     @GetMapping("/me")
@@ -52,5 +55,12 @@ public class EmployeeController {
     public ResponseEntity<Employee> removeProfilePicture(Principal principal) {
         Employee updatedEmployee = employeeService.removeProfilePicture(principal.getName());
         return ResponseEntity.ok(updatedEmployee);
+    }
+
+    // UPDATED: Public endpoint to get a user's public profile data
+    @GetMapping("/{id}")
+    public ResponseEntity<PublicProfileDTO> getPublicProfileById(@PathVariable Long id) {
+        PublicProfileDTO profile = publicProfileService.getPublicProfile(id);
+        return ResponseEntity.ok(profile);
     }
 }
