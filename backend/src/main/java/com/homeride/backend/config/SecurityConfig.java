@@ -58,6 +58,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/rides/{rideId}/accept").authenticated() // ADDED: Allow authenticated users to accept a ride
                         .requestMatchers(HttpMethod.GET, "/api/rides/my-rides").authenticated() // ADDED: Allow authenticated users to view their own rides
                         .requestMatchers(HttpMethod.GET, "/api/employees/{id}").permitAll()
+                        // Inside authorizeHttpRequests(auth -> auth ...
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/chat/history/**").authenticated()
                         .anyRequest().authenticated()
 
                 )

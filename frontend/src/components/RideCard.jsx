@@ -13,38 +13,56 @@ import {
     FiShield,
     FiTrash2,
     FiAlertTriangle,
-    FiXCircle
+    FiXCircle,
+    FiMessageSquare
 } from 'react-icons/fi';
 import { FaCar, FaUserCircle } from 'react-icons/fa';
-// REMOVE: useNavigate
-import PublicProfileModal from './PublicProfileModal.jsx'; // NEW: Import the modal
+import PublicProfileModal from './PublicProfileModal.jsx';
+import ChatBox from './ChatBox.jsx';
+import ChatModal from './ChatModal.jsx';
 
 function RideCard({ ride, currentUser, onActionSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isActionDone, setIsActionDone] = useState(false);
   const { showNotification, showConfirmation } = useNotification();
-  // REMOVED: useNavigate
   
-  // NEW: State for the public profile modal
   const [selectedProfileId, setSelectedProfileId] = useState(null);
+  const [showChatModal, setShowChatModal] = useState(false);
 
-  const participants = ride.participants || [];
+  // Consolidated list of all unique participants, including the requester and driver
+  const allParticipants = useMemo(() => {
+    const participantsList = ride.participants.map(p => p.participant);
+    if (ride.requester) {
+        participantsList.push(ride.requester);
+    }
+    if (ride.driver) {
+        participantsList.push(ride.driver);
+    }
+    const uniqueParticipantsMap = new Map();
+    participantsList.forEach(p => uniqueParticipantsMap.set(p.id, p));
+    
+    return Array.from(uniqueParticipantsMap.values());
+  }, [ride]);
 
   const isAlreadyInvolved = useMemo(() => {
     if (!currentUser || !ride) return false;
-    const isParticipant = participants.some(p => p.participant.id === currentUser.id);
-    const isDriver = ride.driver?.id === currentUser.id;
-    return isParticipant || isDriver;
-  }, [ride, currentUser, participants]);
+    return allParticipants.some(p => p.id === currentUser.id);
+  }, [currentUser, allParticipants]);
 
-  // NEW: Function to open the modal
   const handleViewProfile = (userId) => {
     setSelectedProfileId(userId);
   };
   
-  // NEW: Function to close the modal
   const handleCloseModal = () => {
     setSelectedProfileId(null);
+  };
+  
+  const handleOpenChat = () => {
+      setShowChatModal(true);
+  };
+
+  const handleCloseChatModal = () => {
+    setShowChatModal(false);
   };
 
   const handleDelete = () => {
@@ -84,7 +102,7 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
   const isMyRide = currentUser?.id === ride.requester?.id;
   const isDriverFound = ride.rideType === 'REQUESTED' && ride.driver;
   const isRideFull = ride.rideType === 'OFFERED' 
-    ? (ride.vehicleCapacity != null && participants.length >= ride.vehicleCapacity)
+    ? (ride.vehicleCapacity != null && ride.participants.length >= ride.vehicleCapacity)
     : isDriverFound;
 
   const hasDeparted = new Date(ride.travelDateTime) < new Date();
@@ -126,7 +144,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
               <FiClock />
               <span>{new Date(ride.travelDateTime).toLocaleString()}</span>
             </div>
-            {/* UPDATED: Add onClick to the posted by user */}
             <div className="info-item" onClick={() => handleViewProfile(ride.requester.id)} style={{ cursor: 'pointer' }}>
               <FiUser />
               Posted by <span>{isMyRide ? 'You' : ride.requester?.name}</span>
@@ -139,13 +156,24 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
             )}
           </div>
           <div className="ride-actions">
-            {isMyRide ? (
-              pastRideStatus ? pastRideStatus : (
+            {/* UPDATED: We now conditionally render both buttons inside the same div */}
+            {isMyRide && !pastRideStatus && (
+              <>
+                <Button onClick={handleOpenChat} className="chat-action-btn">
+                  <FiMessageSquare />
+                </Button>
                 <Button onClick={handleDelete} className="secondary">
                   <FiTrash2 />
                 </Button>
-              )
-            ) : (
+              </>
+            )}
+            {/* This handles the case where it's not my ride but I am involved */}
+            {!isMyRide && isAlreadyInvolved && !pastRideStatus && (
+              <Button onClick={handleOpenChat} className="chat-action-btn">
+                  <FiMessageSquare />
+              </Button>
+            )}
+            {!isMyRide && (
               pastRideStatus ? pastRideStatus : (
                 isActionDone || isAlreadyInvolved ? (
                   <div className="ride-status-success">
@@ -171,7 +199,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
             </strong>
               <div className="participants-pills">
                 {ride.rideType === 'OFFERED' && (
-                  // UPDATED: Add onClick to the requester pill
                   <span className="participant-pill driver" onClick={() => handleViewProfile(ride.requester.id)}>
                     {ride.requester.profilePictureUrl ? (
                       <img src={ride.requester.profilePictureUrl} alt={ride.requester.name} />
@@ -182,7 +209,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
                   </span>
                 )}
                 {ride.rideType === 'REQUESTED' && (
-                  // UPDATED: Add onClick to the requester pill
                   <span className="participant-pill" onClick={() => handleViewProfile(ride.requester.id)}>
                     {ride.requester.profilePictureUrl ? (
                       <img src={ride.requester.profilePictureUrl} alt={ride.requester.name} />
@@ -192,8 +218,7 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
                     {ride.requester.name} (Requester)
                   </span>
                 )}
-                {participants.map(p => (
-                  // UPDATED: Add onClick to each participant pill
+                {ride.participants.map(p => (
                   <span key={p.id} className="participant-pill" onClick={() => handleViewProfile(p.participant.id)}>
                     {p.participant.profilePictureUrl ? (
                       <img src={p.participant.profilePictureUrl} alt={p.participant.name} />
@@ -204,7 +229,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
                   </span>
                 ))}
                 {isDriverFound && (
-                  // UPDATED: Add onClick to the driver pill
                   <span className="participant-pill driver" onClick={() => handleViewProfile(ride.driver.id)}>
                     {ride.driver.profilePictureUrl ? (
                       <img src={ride.driver.profilePictureUrl} alt={ride.driver.name} />
@@ -221,7 +245,7 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
                   <div className="info-item">
                       <FiGitMerge />
                       <span>
-                        {participants.length} / {ride.vehicleCapacity} seats taken
+                        {ride.participants.length} / {ride.vehicleCapacity} seats taken
                       </span>
                   </div>
               )}
@@ -233,9 +257,20 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
               )}
           </div>
         </div>
+
+        {/* The chat button is now rendered inside the ride-actions div */}
+        {/* We moved the conditional rendering logic above */}
       </div>
       
-      {/* NEW: Render the modal when selectedProfileId is not null */}
+      {showChatModal && (
+        <ChatModal
+          ride={ride}
+          currentUser={currentUser}
+          participants={allParticipants}
+          onClose={handleCloseChatModal}
+        />
+      )}
+      
       {selectedProfileId && (
         <PublicProfileModal
           userId={selectedProfileId}

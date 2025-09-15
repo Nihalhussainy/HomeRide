@@ -7,12 +7,14 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .ride-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
   border-color: var(--text-secondary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .ride-card-header {
@@ -32,6 +34,15 @@
 .ride-path-icon {
   color: var(--text-secondary);
   margin: 0 8px;
+  transition: color 0.3s ease;
+}
+
+.ride-card:hover .ride-path-icon {
+  color: #3b82f6;
+}
+
+.ride-card:hover .ride-path-icon {
+  color: #3b82f6;
 }
 
 .ride-type-badge {
@@ -42,22 +53,27 @@
   color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border: 1px solid; /* Add a border for definition */
+  border: 1px solid;
+  transition: all 0.2s ease;
 }
 
-/* NEW COLORS */
+.ride-type-badge:hover {
+  transform: scale(1.05);
+}
+
 .ride-type-badge.REQUESTED {
-  background-color: rgba(59, 130, 246, 0.1); /* Muted Blue Background */
-  border-color: #3b82f6; /* Muted Blue Border */
-  color: #60a5fa; /* Lighter Blue Text */
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
+  color: #60a5fa;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
 
 .ride-type-badge.OFFERED {
-  background-color: rgba(16, 185, 129, 0.1); /* Muted Green Background */
-  border-color: #10b981; /* Muted Green Border */
-  color: #34d399; /* Lighter Green Text */
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+  color: #34d399;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
 }
-/* END NEW COLORS */
 
 .ride-card-body {
   display: flex;
@@ -77,6 +93,14 @@
   gap: 10px;
   color: var(--text-secondary);
   font-size: 0.9rem;
+  transition: all 0.2s ease;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.info-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  transform: translateX(2px);
 }
 
 .info-item span {
@@ -85,7 +109,9 @@
 }
 
 .ride-actions {
-  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .ride-status-label {
@@ -99,8 +125,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #34d399; /* Use the lighter green for success text */
+  color: #34d399;
   font-weight: 600;
+  padding: 6px 12px;
+  background-color: rgba(52, 211, 153, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(52, 211, 153, 0.2);
 }
 
 .ride-card-footer {
@@ -130,65 +160,31 @@
   border-radius: 9999px;
   font-size: 0.8rem;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
 }
 
-.no-participants {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  font-style: italic;
+.participant-pill:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.3);
 }
-/* Add this to the end of your file */
-.ride-meta-info {
-  display: flex;
-  gap: 24px;
-  margin-top: 16px;
-}
-/* Add this to the end of your file */
+
 .participant-pill.driver {
-  background-color: var(--primary-hover);
-  color: #000000;
-  font-weight: 600;
-}
-/* Add this to the end of your file */
-.participant-pill.driver {
-  background-color: #3b82f6; /* A subtle blue to indicate the driver */
+  background-color: #3b82f6;
   color: var(--text-primary);
   font-weight: 600;
-}
-/* Add this to the end of your file */
-
-/* Styles for the departed status label */
-.ride-status-departed {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #f59e0b; /* Amber color for warning */
-  font-weight: 600;
-  font-style: italic;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
-/* Fade out the card slightly if it has departed */
-.ride-card.departed {
-  opacity: 0.6;
-  border-color: transparent;
-}
-/* Add this to src/components/RideCard.css */
-
-.ride-status-cancelled {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--danger-color); /* Red color for cancelled */
-  font-weight: 600;
-  font-style: italic;
-}
-/* Add these new rules to src/components/RideCard.css */
-
-.participant-pill {
-  /* ... (existing styles) ... */
-  display: inline-flex; /* This is new */
-  align-items: center; /* This is new */
-  gap: 8px; /* This is new */
+.participant-pill.driver:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
 .participant-pill img {
@@ -202,22 +198,65 @@
   font-size: 24px;
   color: var(--text-secondary);
 }
-/* Update the existing rules to improve the hover effect */
-.participant-pill,
-.ride-info .info-item:nth-child(2) {
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
+
+.no-participants {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
-.participant-pill:hover {
-    /* Changes background to a lighter surface color and adds a subtle lift */
-    background-color: var(--surface-color-light);
-    transform: translateY(-2px);
+.ride-meta-info {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
 }
 
-.participant-pill.driver:hover {
-    /* Keeps the special driver color but adds the same lift */
-    background-color: #3b82f6;
-    transform: translateY(-2px);
-    opacity: 0.9;
+.ride-status-departed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f59e0b;
+  font-weight: 600;
+  font-style: italic;
+  padding: 6px 12px;
+  background-color: rgba(245, 158, 11, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.ride-status-cancelled {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--danger-color);
+  font-weight: 600;
+  font-style: italic;
+  padding: 6px 12px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.ride-card.departed {
+  opacity: 0.6;
+  border-color: transparent;
+}
+
+.custom-button.chat-action-btn {
+  background-color: #000000;
+  border: none;
+  padding: 10px;
+  width: 40px;
+  height: 40px;
+  min-width: 0;
+  color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.custom-button.chat-action-btn:hover {
+  background-color: #ffffff;
+  color: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }

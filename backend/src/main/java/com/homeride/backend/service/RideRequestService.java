@@ -65,6 +65,8 @@ public class RideRequestService {
         }
         // Always filter out old rides
         spec = spec.and(RideRequestRepository.Ridespecs.isAfterCutoffTime(LocalDateTime.now().minusHours(12)));
+
+        // This is the key change. Call the repository method with the EntityGraph.
         return rideRequestRepository.findAll(spec);
     }
     @Transactional
