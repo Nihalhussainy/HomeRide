@@ -33,12 +33,83 @@
 
 .ride-type-toggle button.active {
   background-color: var(--primary-color);
-  /* FIX: Changed text color to black for the active (white) button */
   color: #000000;
 }
-/* Add this to the end of your file */
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+/* NEW: Optional Stops Section Styling */
+.optional-stops-container {
+  background-color: var(--background-color);
+  border: 1px dashed var(--surface-color-light);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.optional-stops-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.stop-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stop-input-group .input-wrapper {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.remove-stop-btn {
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  padding: 8px;
+  font-size: 1rem;
+  transition: transform 0.2s;
+}
+
+.remove-stop-btn:hover {
+  transform: scale(1.1);
+}
+
+.add-stop-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  margin-left: -8px;
+}
+
+.add-stop-btn:hover {
+  color: var(--primary-color);
+}
+
+/* NEW: Custom styling for the dropdown menu */
+.custom-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3e%3cpath d='M7 7l3-3 3 3m0 6l-3 3-3-3' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.2rem;
 }

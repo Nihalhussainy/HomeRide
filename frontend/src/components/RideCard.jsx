@@ -14,11 +14,14 @@ import {
     FiTrash2,
     FiAlertTriangle,
     FiXCircle,
-    FiMessageSquare
+    FiMessageSquare,
+    FiChevronDown,
+    FiChevronUp,
+    FiMapPin,
+    FiNavigation
 } from 'react-icons/fi';
 import { FaCar, FaUserCircle } from 'react-icons/fa';
 import PublicProfileModal from './PublicProfileModal.jsx';
-import ChatBox from './ChatBox.jsx';
 import ChatModal from './ChatModal.jsx';
 
 function RideCard({ ride, currentUser, onActionSuccess }) {
@@ -28,6 +31,7 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
   
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [showStops, setShowStops] = useState(false);
 
   // Consolidated list of all unique participants, including the requester and driver
   const allParticipants = useMemo(() => {
@@ -156,7 +160,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
             )}
           </div>
           <div className="ride-actions">
-            {/* UPDATED: We now conditionally render both buttons inside the same div */}
             {isMyRide && !pastRideStatus && (
               <>
                 <Button onClick={handleOpenChat} className="chat-action-btn">
@@ -167,7 +170,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
                 </Button>
               </>
             )}
-            {/* This handles the case where it's not my ride but I am involved */}
             {!isMyRide && isAlreadyInvolved && !pastRideStatus && (
               <Button onClick={handleOpenChat} className="chat-action-btn">
                   <FiMessageSquare />
@@ -191,6 +193,32 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
             )}
           </div>
         </div>
+        
+        {/* ENHANCED: Modern Stops Display */}
+        {ride.stops && ride.stops.length > 0 && (
+          <div className="ride-card-stops">
+            <button onClick={() => setShowStops(!showStops)} className="stops-toggle">
+              <div className="stops-toggle-left">
+                <FiNavigation />
+                <span>Route Stops</span>
+              </div>
+              <div className="stops-toggle-right">
+                <span className="stops-count">{ride.stops.length}</span>
+                {showStops ? <FiChevronUp /> : <FiChevronDown />}
+              </div>
+            </button>
+            {showStops && (
+              <ul className="stops-list">
+                {ride.stops.map((stop, index) => (
+                  <li key={index} className="stop-item">
+                    <div className="stop-number">{index + 1}</div>
+                    <div className="stop-location">{stop}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         <div className="ride-card-footer">
           <div className="participants-list">
@@ -258,8 +286,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
           </div>
         </div>
 
-        {/* The chat button is now rendered inside the ride-actions div */}
-        {/* We moved the conditional rendering logic above */}
       </div>
       
       {showChatModal && (

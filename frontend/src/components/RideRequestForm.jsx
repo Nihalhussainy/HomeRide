@@ -4,7 +4,7 @@ import Button from './Button.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
 import './RideRequestForm.css';
 import axios from 'axios';
-import { FaPlusCircle } from 'react-icons/fa';
+import { FaPlusCircle, FaMinusCircle, FaPlus } from 'react-icons/fa';
 
 function RideRequestForm({ onRideCreated }) {
   const [origin, setOrigin] = useState('');
@@ -15,11 +15,31 @@ function RideRequestForm({ onRideCreated }) {
   const [vehicleModel, setVehicleModel] = useState('');
   const [vehicleCapacity, setVehicleCapacity] = useState('');
   const [genderPreference, setGenderPreference] = useState('ALL');
+  
+  // NEW: State for optional stops
+  const [stops, setStops] = useState(['']);
 
   const [isLoading, setIsLoading] = useState(false);
   const { showNotification } = useNotification();
 
-  // --- NEW: Function to get the current time as a string for the input's min attribute ---
+  // Function to handle changes to a stop input field
+  const handleStopChange = (index, value) => {
+    const newStops = [...stops];
+    newStops[index] = value;
+    setStops(newStops);
+  };
+
+  // Function to add a new stop input field
+  const handleAddStop = () => {
+    setStops([...stops, '']);
+  };
+
+  // Function to remove a stop input field
+  const handleRemoveStop = (index) => {
+    const newStops = stops.filter((_, i) => i !== index);
+    setStops(newStops);
+  };
+  
   const getNowString = () => {
     const now = new Date();
     // Adjust for the local timezone offset
@@ -41,7 +61,6 @@ function RideRequestForm({ onRideCreated }) {
       return;
     }
 
-    // --- NEW: Add a final validation check for the date and time ---
     const selectedDate = new Date(travelDateTime);
     if (selectedDate < new Date()) {
       showNotification('You cannot schedule a ride for a past date or time.', 'error');
@@ -49,6 +68,9 @@ function RideRequestForm({ onRideCreated }) {
     }
 
     setIsLoading(true);
+    
+    // Filter out any empty stop inputs
+    const filteredStops = stops.filter(stop => stop.trim() !== '');
 
     const rideData = {
       origin,
@@ -59,6 +81,7 @@ function RideRequestForm({ onRideCreated }) {
       isEmergency: false,
       vehicleModel: rideType === 'OFFERED' ? vehicleModel : null,
       vehicleCapacity: rideType === 'OFFERED' ? parseInt(vehicleCapacity) : null,
+      stops: rideType === 'OFFERED' ? filteredStops : [],
     };
 
     try {
@@ -75,7 +98,7 @@ function RideRequestForm({ onRideCreated }) {
       setVehicleModel('');
       setVehicleCapacity('');
       setGenderPreference('ALL');
-
+      setStops(['']); // Reset stops
     } catch (error) {
       showNotification('Failed to post ride. Please try again.', 'error');
       console.error('Error posting ride:', error);
@@ -118,12 +141,38 @@ function RideRequestForm({ onRideCreated }) {
             required
           />
         </div>
+        
+        {/* NEW: Optional Stops Section */}
+        {rideType === 'OFFERED' && (
+          <div className="optional-stops-container">
+            <h4 className="optional-stops-title">Optional Stops</h4>
+            {stops.map((stop, index) => (
+              <div key={index} className="stop-input-group">
+                <Input
+                  type="text"
+                  placeholder={`Stop ${index + 1}`}
+                  value={stop}
+                  onChange={(e) => handleStopChange(index, e.target.value)}
+                />
+                {stops.length > 1 && (
+                  <button type="button" onClick={() => handleRemoveStop(index)} className="remove-stop-btn">
+                    <FaMinusCircle />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button type="button" onClick={handleAddStop} className="add-stop-btn">
+              <FaPlus /> Add another stop
+            </button>
+          </div>
+        )}
+
         <Input
           type="datetime-local"
           value={travelDateTime}
           onChange={(e) => setTravelDateTime(e.target.value)}
           required
-          min={getNowString()} // --- THIS IS THE NEW ATTRIBUTE ---
+          min={getNowString()}
         />
 
         {rideType === 'OFFERED' && (
@@ -147,13 +196,12 @@ function RideRequestForm({ onRideCreated }) {
         )}
         
         <div className="input-wrapper">
-          <label htmlFor="gender-pref" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Passenger Preference</label>
+          <label htmlFor="gender-pref" className="input-label">Passenger Preference</label>
           <select
             id="gender-pref"
-            className="custom-input"
+            className="custom-input custom-select"
             value={genderPreference}
             onChange={(e) => setGenderPreference(e.target.value)}
-            style={{ appearance: 'none' }}
           >
             <option value="ALL">All Genders Welcome</option>
             <option value="FEMALE_ONLY">Female Passengers Only</option>

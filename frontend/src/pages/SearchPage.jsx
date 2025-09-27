@@ -8,6 +8,7 @@ import RideCard from '../components/RideCard.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
 import '../App.css';
 import '../components/SearchFilter.css';
+import AutocompleteInput from '../components/AutocompleteInput.jsx';
 
 function SearchPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -22,9 +23,26 @@ function SearchPage() {
     const { showNotification } = useNotification();
     const [rideType, setRideType] = useState(searchParams.get('rideType') || 'all');
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
 
     const resultsRef = useRef(null);
     const navigate = useNavigate();
+
+    const fetchCurrentUser = useCallback(async () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const response = await axios.get('http://localhost:8080/api/employees/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setCurrentUser(response.data);
+            } catch (error) {
+                console.error('Failed to fetch user:', error);
+                localStorage.removeItem('token');
+                navigate('/login');
+            }
+        }
+    }, [navigate]);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -59,6 +77,10 @@ function SearchPage() {
             setIsLoading(false);
         }
     }, [origin, destination, travelDateTime, passengerCount, rideType, showNotification]);
+
+    useEffect(() => {
+        fetchCurrentUser();
+    }, [fetchCurrentUser]);
 
     useEffect(() => {
         if (
@@ -114,18 +136,17 @@ function SearchPage() {
             </header>
             <div className="search-form-wrapper">
                 <form onSubmit={handleSearch} className="enhanced-search-form" noValidate>
-                    {/* Primary Search Fields */}
                     <div className="search-fields-primary">
                         <div className="search-field-group">
                             <label className="field-label">
                                 <FiMapPin className="label-icon" />
                                 From
                             </label>
-                            <Input
+                            <AutocompleteInput
                                 type="text"
                                 placeholder="Enter departure location..."
                                 value={origin}
-                                onChange={(e) => setOrigin(e.target.value)}
+                                onChange={setOrigin}
                                 className="search-input"
                             />
                         </div>
@@ -134,11 +155,11 @@ function SearchPage() {
                                 <FiMapPin className="label-icon destination-icon" />
                                 To
                             </label>
-                            <Input
+                            <AutocompleteInput
                                 type="text"
                                 placeholder="Enter destination..."
                                 value={destination}
-                                onChange={(e) => setDestination(e.target.value)}
+                                onChange={setDestination}
                                 className="search-input"
                             />
                         </div>
@@ -156,8 +177,6 @@ function SearchPage() {
                             />
                         </div>
                     </div>
-
-                    {/* Search & Reset Buttons Below */}
                     <div className="search-actions-bottom">
                         <Button
                             type="submit"
@@ -176,8 +195,6 @@ function SearchPage() {
                             Reset
                         </Button>
                     </div>
-
-                    {/* Advanced Filters Section */}
                     <div className="advanced-filter-toggle">
                         <button type="button" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}>
                             {showAdvancedFilters ? <FiChevronUp /> : <FiChevronDown />}
@@ -272,7 +289,7 @@ function SearchPage() {
                         </div>
                         <div className="ride-list results-list">
                             {rides.map(ride => (
-                                <RideCard key={ride.id} ride={ride} />
+                                <RideCard key={ride.id} ride={ride} currentUser={currentUser} onActionSuccess={fetchData}/>
                             ))}
                         </div>
                     </div>

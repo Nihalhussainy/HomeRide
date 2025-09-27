@@ -19,6 +19,12 @@ public class RideRequest {
     private String origin;
     @Column(nullable = false)
     private String destination;
+
+    @ElementCollection
+    @CollectionTable(name = "ride_stops", joinColumns = @JoinColumn(name = "ride_request_id"))
+    @Column(name = "stop")
+    private List<String> stops;
+
     @Column(nullable = false)
     private String rideType;
     @Column(nullable = false)
