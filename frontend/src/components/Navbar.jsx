@@ -31,7 +31,7 @@ function Navbar() {
 
   return (
     <nav className="navbar">
-      <NavLink to={token ? "/dashboard" : "/login"} className="navbar-brand">
+      <NavLink to="/" className="navbar-brand">
         <FaCarSide size={30} className="navbar-brand-icon" />
         HomeRide
       </NavLink>
@@ -43,7 +43,6 @@ function Navbar() {
               <FiSearch size={20} />
               <span>Search</span>
             </NavLink>
-            {/* The Admin Panel link is now before My Profile */}
             {userRole === 'ADMIN' && (
               <NavLink to="/admin">Admin Panel</NavLink>
             )}

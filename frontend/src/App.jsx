@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import HomePage from './pages/HomePage.jsx'; // Import the new HomePage
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
@@ -9,7 +10,9 @@ import Navbar from './components/Navbar.jsx';
 import RouteGuard from './components/RouteGuard.jsx';
 import { NotificationProvider } from './context/NotificationContext.jsx';
 import './App.css';
-// REMOVED: import PublicProfilePage from './pages/PublicProfilePage.jsx';
+import './StaticPages.css';
+import AboutPage from './pages/AboutPage.jsx'; // <-- ADD THIS
+import ContactPage from './pages/ContactPage.jsx'; // <-- ADD THIS
 
 function App() {
   return (
@@ -18,9 +21,13 @@ function App() {
         <Navbar />
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Navigate to="/login" />} />
+          {/* UPDATED: The root path now goes to HomePage */}
+          <Route path="/" element={<HomePage />} /> 
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+           <Route path="/about" element={<AboutPage />} /> {/* <-- ADD THIS */}
+          <Route path="/contact" element={<ContactPage />} /> {/* <-- ADD THIS */}
+
 
           {/* Protected Routes for All Logged-in Users */}
           <Route 
@@ -41,8 +48,6 @@ function App() {
             path="/admin" 
             element={<RouteGuard adminOnly={true}><AdminDashboardPage /></RouteGuard>} 
           />
-          {/* REMOVED: The old public profile route */}
-          {/* <Route path="/profile/:id" element={<PublicProfilePage />} /> */}
         </Routes>
       </div>
     </NotificationProvider>

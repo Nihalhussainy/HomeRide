@@ -1,29 +1,7 @@
 /* src/App.css */
 
 /* 1. Root Variables for Consistent Theming */
-:root {
-  --background-color: #111827; /* Dark navy */
-  --surface-color: #1f2937;    /* Lighter navy/grey */
-  --surface-color-light: #374151; /* Even lighter grey */
-  
-  --primary-color: #8b5cf6;     /* Purple */
-  --danger-color: #ef4444;      /* Red */
 
-  --text-primary: #f9fafb;      /* Off-white */
-  --text-secondary: #9ca3af;   /* Grey */
-
-  --border-radius: 8px;
-  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-
-  /* Font */
-  font-family: 'Manrope', sans-serif;
-}
-
-body {
-    background-color: var(--background-color);
-    color: var(--text-primary);
-    margin: 0;
-}
 
 
 /* 2. Authentication Pages Layout */

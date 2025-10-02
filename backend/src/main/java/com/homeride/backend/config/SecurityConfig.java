@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        // NEW: Allow public access to the location autocomplete endpoint
+                        .requestMatchers("/api/locations/autocomplete").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/rides/**").authenticated() // ADDED: Allow authenticated users to GET ride data
                         .requestMatchers(HttpMethod.POST, "/api/rides/request").authenticated() // ADDED: Allow authenticated users to POST new ride requests
