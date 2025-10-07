@@ -1,0 +1,193 @@
+/* src/components/SimpleRideCard.css */
+
+.simple-ride-card {
+  background: var(--surface-color);
+  border: 1px solid var(--surface-color-light);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.simple-ride-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.card-grid-container {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 1fr auto auto auto;
+  align-items: center;
+  gap: 4px 20px;
+  padding: 24px;
+}
+
+/* --- Column 1: Timeline --- */
+.time-start, .time-end {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  text-align: center;
+}
+.time-start { grid-area: 1 / 1; }
+.time-end { grid-area: 3 / 1; }
+
+.timeline-connector {
+  grid-area: 2 / 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  min-height: 40px;
+}
+.timeline-line {
+  width: 3px;
+  height: 100%;
+  background: var(--surface-color-light);
+}
+.duration-text {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--surface-color);
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 4px;
+}
+
+/* --- Column 2: Route --- */
+.location-start, .location-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.location-start { grid-area: 1 / 2; }
+.location-end { grid-area: 3 / 2; }
+
+.location-icon { font-size: 1.2rem; }
+.location-icon.origin { color: #10b981; }
+.location-icon.destination { color: #ef4444; }
+
+.location-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* --- Column 3: Price (MODIFIED) --- */
+.price-container {
+  grid-area: 1 / 3 / 4 / 4;
+  background-color: var(--surface-color-light);
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-align: center;
+  align-self: center;
+  /* Add flex properties for perfect centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.price-value {
+  font-size: 1.75rem; /* Slightly larger for more impact */
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1;
+}
+.price-label { /* This class is no longer used but kept for reference */
+  display: none;
+}
+
+/* --- Bottom Row --- */
+.card-divider {
+  grid-area: 4 / 1 / 5 / 4;
+  height: 1px;
+  background-color: var(--surface-color-light);
+  margin: 16px 0;
+}
+
+.driver-container {
+  grid-area: 5 / 1 / 6 / 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.driver-avatar-wrapper { position: relative; }
+.driver-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.driver-avatar-placeholder { width: 44px; height: 44px; color: var(--text-secondary); }
+.driver-info-text { display: flex; flex-direction: column; gap: 2px; }
+.driver-name { font-weight: 600; color: var(--text-primary); }
+.driver-rating { display: flex; align-items: center; gap: 4px; font-size: 0.9rem; }
+.star-icon { color: #fbbf24; }
+.rating-value { color: var(--text-secondary); font-weight: 500; }
+
+.seats-container {
+  grid-area: 5 / 3;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.seats-container.low-seats {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+.seats-icon { font-size: 1.1rem; }
+.seats-text { font-size: 0.9rem; }
+
+.simple-ride-card-error {
+  padding: 24px;
+  text-align: center;
+  color: var(--danger-color);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .card-grid-container {
+        grid-template-columns: auto 1fr; /* Time | Route */
+        grid-template-rows: auto auto 1fr auto auto auto; /* More rows for stacking */
+        gap: 8px 16px;
+        padding: 20px;
+    }
+
+    .time-start { grid-area: 1 / 1; }
+    .location-start { grid-area: 1 / 2; }
+    
+    .timeline-connector { grid-area: 2 / 1 / 4 / 2; margin-left: calc(50% - 1.5px); }
+    
+    .time-end { grid-area: 3 / 1; }
+    .location-end { grid-area: 3 / 2; }
+
+    .price-container {
+        grid-area: 4 / 1 / 5 / 3; /* Span full width in a new row */
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-divider { grid-area: 5 / 1 / 6 / 3; }
+    .driver-container { grid-area: 6 / 1 / 7 / 3; }
+    .seats-container {
+        grid-area: 7 / 1 / 8 / 3;
+        margin-top: 8px;
+    }
+}

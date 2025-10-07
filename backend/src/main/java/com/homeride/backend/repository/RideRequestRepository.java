@@ -17,12 +17,11 @@ import java.util.Optional;
 @Repository
 public interface RideRequestRepository extends JpaRepository<RideRequest, Long>, JpaSpecificationExecutor<RideRequest> {
 
-    // Use EntityGraph to eagerly fetch all related entities
+    // FIXED: Removed "stops" from EntityGraph - stops is @ElementCollection, not an entity relationship
     @Override
     @EntityGraph(attributePaths = {"requester", "driver", "participants.participant"})
     List<RideRequest> findAll();
 
-    // Use EntityGraph for any other find methods you use frequently
     @EntityGraph(attributePaths = {"requester", "driver", "participants.participant"})
     List<RideRequest> findAll(Specification<RideRequest> spec);
 

@@ -224,7 +224,7 @@ function ChatBox({ rideId, currentUser, participants }) {
                                     {!isMyMessage && (
                                         <div 
                                             className={`message-avatar ${showAvatarAndName ? '' : 'hidden-avatar'}`}
-                                            onClick={() => handleViewProfile(getProfileId(msg.senderEmail))}
+                                            style={{ cursor: 'default' }}
                                         >
                                             {profilePictureUrl ? (
                                                 <img 
@@ -232,15 +232,14 @@ function ChatBox({ rideId, currentUser, participants }) {
                                                     alt={senderName}
                                                     onError={(e) => {
                                                         e.target.style.display = 'none';
-                                                        e.target.nextSibling.style.display = 'block';
                                                     }}
                                                 />
-                                            ) : null}
-                                            <FaUserCircle 
-                                                size={32} 
-                                                className="participant-icon"
-                                                style={{ display: profilePictureUrl ? 'none' : 'block' }}
-                                            />
+                                            ) : (
+                                                <FaUserCircle 
+                                                    size={32} 
+                                                    className="participant-icon"
+                                                />
+                                            )}
                                         </div>
                                     )}
 

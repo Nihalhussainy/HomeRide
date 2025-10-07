@@ -110,6 +110,7 @@ body {
   align-items: center;
   border: 2px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+  overflow: visible; /* Add this */
 }
 
 .hero-search-form:hover {
@@ -123,6 +124,7 @@ body {
   flex: 1;
   display: flex;
   align-items: center;
+  transform: translate(0); /* <-- ADD THIS LINE */
 }
 
 .input-icon {
@@ -158,7 +160,175 @@ body {
 .hero-search-input.date {
   color-scheme: dark;
 }
+/* Custom Date Display for Hero Section */
+.hero-date-display {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
 
+.hero-date-display:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Calendar Dropdown Styles */
+/* Calendar Dropdown Styles */
+.calendar-dropdown {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1a1a1a;
+  border: 1px solid var(--surface-color-light);
+  border-radius: 12px;
+  padding: 10px;
+  z-index: 10000;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  min-width: 200px;
+  animation: slideUp 0.2s ease;
+}
+
+/* This rule NOW simply aligns it to the left of its container */
+.calendar-dropdown.hero-calendar {
+  left: 0;
+  transform: none;
+  bottom: calc(100% + 12px); /* Position above the input */
+  top: auto; /* Override any top positioning */
+}
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.today-button {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.08));
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  font-size: 0.95rem;
+}
+
+.today-button:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.15));
+  border-color: rgba(59, 130, 246, 0.6);
+  transform: translateY(-2px);
+}
+
+.calendar-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--surface-color-light);
+}
+
+.calendar-navigation button {
+  background: var(--surface-color-light);
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.calendar-navigation button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.calendar-month {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.calendar-weekdays div {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: var(--text-primary);
+  position: relative;
+}
+
+.calendar-day:hover:not(.empty):not(.past) {
+  background-color: var(--surface-color-light);
+  transform: scale(1.05);
+}
+
+.calendar-day.empty {
+  cursor: default;
+  opacity: 0;
+}
+
+.calendar-day.today {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.15));
+  border: 2px solid #60a5fa;
+  font-weight: 700;
+  color: #60a5fa;
+}
+
+.calendar-day.selected {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.calendar-day.past {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
 .search-button {
   padding: 20px 45px;
   background: linear-gradient(
@@ -195,7 +365,7 @@ body {
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: 3; /* Make sure this is lower than calendar */
   cursor: pointer;
 }
 
@@ -823,11 +993,18 @@ body {
     border-radius: 30px;
     padding: 20px;
   }
-
-  .search-input-wrapper {
-    width: 100%;
+  .calendar-dropdown.hero-calendar {
+    left: 0;
+    transform: none;
   }
 
+  .search-input-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow: visible; /* Add this */
+}
   .hero-search-input {
     padding: 18px 18px 18px 50px;
   }
@@ -854,6 +1031,7 @@ body {
     grid-template-columns: 1fr;
     gap: 40px;
   }
+  
 }
 
 @media (max-width: 768px) {
@@ -929,3 +1107,4 @@ body {
     /* 3. Keep the transition smooth */
     transition: background-color 5000s ease-in-out 0s;
 }
+

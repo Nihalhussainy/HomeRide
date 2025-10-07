@@ -4,49 +4,32 @@ import Input from './Input.jsx';
 import { FiMapPin } from 'react-icons/fi';
 import './AutocompleteInput.css';
 
-// Using a custom hook for debouncing API calls to prevent excessive requests
 const useDebounce = (value, delay) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
-
     useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-
-        return () => {
-            clearTimeout(handler);
-        };
+        const handler = setTimeout(() => { setDebouncedValue(value); }, delay);
+        return () => { clearTimeout(handler); };
     }, [value, delay]);
-
     return debouncedValue;
 };
-
 
 function AutocompleteInput({ value, onChange, placeholder, ...props }) {
     const [suggestions, setSuggestions] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const wrapperRef = useRef(null);
+    const debouncedValue = useDebounce(value, 300); // Faster debounce for better UX
 
-    // Debounce the user input to prevent too many API calls
-    const debouncedValue = useDebounce(value, 500);
-
-    // --- NEW: API call for location suggestions from backend (or a direct API)
-    // NOTE: This example uses a placeholder API call. You would replace this with a call to your new backend endpoint.
-    // The backend endpoint would then call a service like Google Maps Geocoding.
     const fetchSuggestions = async (query) => {
-        if (query.trim() === '') {
+        if (query.trim().length < 3) { // Don't search for very short strings
             setSuggestions([]);
             return;
         }
-
         setIsSearching(true);
         try {
-            // Placeholder for backend call
-            // In a real implementation, the backend would call a service like Google Maps API
-            const response = await axios.get(`http://localhost:8080/api/locations/autocomplete?query=${query}`);
-            const apiSuggestions = response.data; // Assuming backend returns an array of strings
-            setSuggestions(apiSuggestions);
+            // MODIFIED: Pointing to the new backend endpoint for Google Places
+            const response = await axios.get(`http://localhost:8080/api/places/autocomplete?query=${query}`);
+            setSuggestions(response.data || []);
         } catch (error) {
             console.error('Error fetching autocomplete suggestions:', error);
             setSuggestions([]);
@@ -56,12 +39,12 @@ function AutocompleteInput({ value, onChange, placeholder, ...props }) {
     };
 
     useEffect(() => {
-        if (debouncedValue) {
+        if (debouncedValue && isFocused) {
             fetchSuggestions(debouncedValue);
         } else {
             setSuggestions([]);
         }
-    }, [debouncedValue]);
+    }, [debouncedValue, isFocused]);
 
     const handleSelect = (suggestion) => {
         onChange(suggestion);
@@ -69,18 +52,14 @@ function AutocompleteInput({ value, onChange, placeholder, ...props }) {
         setIsFocused(false);
     };
 
-    // Close suggestions when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-                setSuggestions([]);
                 setIsFocused(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => { document.removeEventListener('mousedown', handleClickOutside); };
     }, [wrapperRef]);
     
     return (
@@ -89,20 +68,18 @@ function AutocompleteInput({ value, onChange, placeholder, ...props }) {
                 type="text"
                 placeholder={placeholder}
                 value={value}
-                onChange={(e) => {
-                    onChange(e.target.value);
-                    setIsFocused(true);
-                }}
+                onChange={(e) => onChange(e.target.value)}
                 onFocus={() => setIsFocused(true)}
+                autoComplete="off" // Prevent browser's native autocomplete
                 {...props}
             />
-            {isFocused && (isSearching || suggestions.length > 0) && (
+            {isFocused && value.length > 2 && (
                 <ul className="suggestions-list">
                     {isSearching ? (
                         <li className="loading-item">Searching...</li>
                     ) : suggestions.length > 0 ? (
                         suggestions.map((suggestion, index) => (
-                            <li key={index} onClick={() => handleSelect(suggestion)}>
+                            <li key={index} onMouseDown={() => handleSelect(suggestion)}>
                                 <FiMapPin size={16} className="suggestion-icon" />
                                 {suggestion}
                             </li>

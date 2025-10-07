@@ -1,18 +1,20 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import HomePage from './pages/HomePage.jsx'; // Import the new HomePage
-import LoginPage from './pages/LoginPage.jsx';
-import RegisterPage from './pages/RegisterPage.jsx';
-import DashboardPage from './pages/DashboardPage.jsx';
-import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
-import SearchPage from './pages/SearchPage.jsx';
-import Navbar from './components/Navbar.jsx';
-import RouteGuard from './components/RouteGuard.jsx';
 import { NotificationProvider } from './context/NotificationContext.jsx';
+import Navbar from './components/Navbar';
+import RouteGuard from './components/RouteGuard';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
+import OfferRidePage from './pages/OfferRidePage';
+import SearchPage from './pages/SearchPage';
+import RideDetailPage from './pages/RideDetailPage';
+import ProfilePage from './pages/ProfilePage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
 import './App.css';
 import './StaticPages.css';
-import AboutPage from './pages/AboutPage.jsx'; // <-- ADD THIS
-import ContactPage from './pages/ContactPage.jsx'; // <-- ADD THIS
 
 function App() {
   return (
@@ -21,33 +23,24 @@ function App() {
         <Navbar />
         <Routes>
           {/* Public Routes */}
-          {/* UPDATED: The root path now goes to HomePage */}
           <Route path="/" element={<HomePage />} /> 
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-           <Route path="/about" element={<AboutPage />} /> {/* <-- ADD THIS */}
-          <Route path="/contact" element={<ContactPage />} /> {/* <-- ADD THIS */}
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
 
-
-          {/* Protected Routes for All Logged-in Users */}
-          <Route 
-            path="/dashboard" 
-            element={<RouteGuard><DashboardPage /></RouteGuard>} 
-          />
-          <Route 
-            path="/profile" 
-            element={<RouteGuard><ProfilePage /></RouteGuard>} 
-          />
-          <Route 
-            path="/search" 
-            element={<RouteGuard><SearchPage /></RouteGuard>} 
-          />
-        
-          {/* Protected Route exclusively for Admins */}
-          <Route 
-            path="/admin" 
-            element={<RouteGuard adminOnly={true}><AdminDashboardPage /></RouteGuard>} 
-          />
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={<RouteGuard><DashboardPage /></RouteGuard>} />
+          <Route path="/profile" element={<RouteGuard><ProfilePage /></RouteGuard>} />
+          <Route path="/offer-ride" element={<RouteGuard><OfferRidePage /></RouteGuard>} />
+          <Route path="/search" element={<RouteGuard><SearchPage /></RouteGuard>} />
+          <Route path="/ride/:id" element={<RouteGuard><RideDetailPage /></RouteGuard>} />
+          
+          {/* Admin Route */}
+          <Route path="/admin" element={<RouteGuard adminOnly={true}><AdminDashboardPage /></RouteGuard>} />
+          
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
     </NotificationProvider>

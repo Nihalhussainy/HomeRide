@@ -47,21 +47,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
-                        // NEW: Allow public access to the location autocomplete endpoint
-                        .requestMatchers("/api/locations/autocomplete").permitAll()
+                        // MODIFIED: Replaced old autocomplete with new Google Places endpoint
+                        .requestMatchers("/api/places/autocomplete").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/employees/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rides").authenticated()
+                        .requestMatchers("/api/rides/**").authenticated()
+                        .requestMatchers("/api/ratings/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/rides/**").authenticated() // ADDED: Allow authenticated users to GET ride data
-                        .requestMatchers(HttpMethod.POST, "/api/rides/request").authenticated() // ADDED: Allow authenticated users to POST new ride requests
-                        .requestMatchers(HttpMethod.DELETE, "/api/rides/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/employees/me/profile-picture").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/employees/me/profile-picture").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/employees/me").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/rides/{rideId}/join").authenticated() // ADDED: Allow authenticated users to join a ride
-                        .requestMatchers(HttpMethod.POST, "/api/rides/{rideId}/accept").authenticated() // ADDED: Allow authenticated users to accept a ride
-                        .requestMatchers(HttpMethod.GET, "/api/rides/my-rides").authenticated() // ADDED: Allow authenticated users to view their own rides
-                        .requestMatchers(HttpMethod.GET, "/api/employees/{id}").permitAll()
-                        // Inside authorizeHttpRequests(auth -> auth ...
-                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/chat/history/**").authenticated()
                         .anyRequest().authenticated()
 

@@ -30,7 +30,6 @@ public class Employee {
     @Column(nullable = true)
     private String gender;
 
-    // NEW: Added phone number field (can be null)
     @Column(nullable = true)
     private String phoneNumber;
 
@@ -45,4 +44,8 @@ public class Employee {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    // NEW: Transient field for average rating (not stored in DB)
+    @Transient
+    private Double averageRating;
 }

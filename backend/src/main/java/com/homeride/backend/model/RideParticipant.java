@@ -1,6 +1,6 @@
 package com.homeride.backend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore; // 1. Add this import
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,7 +20,7 @@ public class RideParticipant {
 
     @ManyToOne
     @JoinColumn(name = "ride_request_id", nullable = false)
-    @JsonIgnore // 2. Add this annotation here
+    @JsonBackReference // CORRECTED: Changed from @JsonIgnore
     private RideRequest rideRequest;
 
     @ManyToOne

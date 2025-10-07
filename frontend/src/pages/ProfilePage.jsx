@@ -10,6 +10,8 @@ import '../App.css';
 import { useNotification } from '../context/NotificationContext.jsx';
 import { FaStar, FaEnvelope, FaUserCircle, FaHistory, FaCommentDots, FaArrowRight, FaCalendarAlt, FaCamera, FaTrashAlt, FaPhone } from 'react-icons/fa';
 
+const ITEMS_PER_PAGE = 5;
+
 function ProfilePage() {
   const [user, setUser] = useState(null);
   const [myRides, setMyRides] = useState([]);
@@ -24,6 +26,10 @@ function ProfilePage() {
 
   const [imageToCrop, setImageToCrop] = useState(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
+  
+  // State for pagination
+  const [visibleRatings, setVisibleRatings] = useState(ITEMS_PER_PAGE);
+  const [visibleRides, setVisibleRides] = useState(ITEMS_PER_PAGE);
 
   const fetchData = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -154,9 +160,9 @@ function ProfilePage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setUser(response.data);
-            showNotification('Profile picture removed.'); // New notification
+            showNotification('Profile picture removed.');
         } catch (error) {
-            showNotification('Failed to remove profile picture.', 'error'); // New notification
+            showNotification('Failed to remove profile picture.', 'error');
         }
     });
   };
@@ -188,6 +194,17 @@ function ProfilePage() {
       rating.ratee.id === rateeId
     );
   };
+  
+  const sortedRides = useMemo(() => {
+      return [...myRides]
+        .filter(ride => ride.rideType !== 'REQUESTED' || ride.driver)
+        .sort((a, b) => new Date(b.travelDateTime) - new Date(a.travelDateTime));
+  }, [myRides]);
+  
+  const sortedRatings = useMemo(() => {
+      return [...myRatings]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [myRatings]);
 
   if (!user) {
     return <div className="main-container">Loading profile...</div>;
@@ -273,10 +290,9 @@ function ProfilePage() {
         <div className="feedback-column">
           <h2><FaCommentDots /> Feedback Received</h2>
           <div className="ratings-list">
-            {myRatings.length > 0 ? (
-              [...myRatings]
-                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                .map(rating => (
+            {sortedRatings.length > 0 ? (
+              <>
+                {sortedRatings.slice(0, visibleRatings).map(rating => (
                   <div key={rating.id} className="rating-card" style={{backgroundColor: 'var(--surface-color)', padding: '15px', borderRadius: 'var(--border-radius)', marginBottom: '10px', border: '1px solid var(--surface-color-light)'}}>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '8px' }}>
                       For ride: <strong>{rating.rideRequest.origin} <FaArrowRight size={10} /> {rating.rideRequest.destination}</strong>
@@ -290,7 +306,13 @@ function ProfilePage() {
                       </span>
                     </div>
                   </div>
-                ))
+                ))}
+                {visibleRatings < sortedRatings.length && (
+                  <div className="load-more-container">
+                    <Button onClick={() => setVisibleRatings(prev => prev + ITEMS_PER_PAGE)}>Load More</Button>
+                  </div>
+                )}
+              </>
             ) : (
               <p>You have not received any feedback yet.</p>
             )}
@@ -300,50 +322,57 @@ function ProfilePage() {
         <div className="history-column">
           <h2><FaHistory /> My Travel History</h2>
           <div className="ride-list">
-            {[...myRides]
-              // --- THIS IS THE NEW FILTER LOGIC ---
-              .filter(ride => ride.rideType !== 'REQUESTED' || ride.driver)
-              .sort((a, b) => b.id - a.id)
-              .map(ride => {
-                const otherUsers = [];
-                if (ride.requester.id !== user.id) otherUsers.push(ride.requester);
-                if (ride.driver && ride.driver.id !== user.id) otherUsers.push(ride.driver);
-                ride.participants.forEach(p => {
-                    if(p.participant.id !== user.id) otherUsers.push(p.participant);
-                });
-                const uniqueRatees = [...new Map(otherUsers.map(item => [item['id'], item])).values()];
-                const hasDeparted = new Date(ride.travelDateTime) < new Date();
+            {sortedRides.length > 0 ? (
+              <>
+                {sortedRides.slice(0, visibleRides).map(ride => {
+                  const otherUsers = [];
+                  if (ride.requester.id !== user.id) otherUsers.push(ride.requester);
+                  if (ride.driver && ride.driver.id !== user.id) otherUsers.push(ride.driver);
+                  ride.participants.forEach(p => {
+                      if(p.participant.id !== user.id) otherUsers.push(p.participant);
+                  });
+                  const uniqueRatees = [...new Map(otherUsers.map(item => [item['id'], item])).values()];
+                  const hasDeparted = new Date(ride.travelDateTime) < new Date();
 
-                return (
-                  <div key={ride.id} className="history-ride-card">
-                    <div className="history-ride-info">
-                      <p><strong>{ride.origin} to {ride.destination}</strong></p>
-                      <p style={{color: 'var(--text-secondary)'}}>Date: {new Date(ride.travelDateTime).toLocaleString()}</p>
+                  return (
+                    <div key={ride.id} className="history-ride-card">
+                      <div className="history-ride-info">
+                        <p><strong>{ride.origin} to {ride.destination}</strong></p>
+                        <p style={{color: 'var(--text-secondary)'}}>Date: {new Date(ride.travelDateTime).toLocaleString()}</p>
+                      </div>
+                      <div className="history-ride-feedback">
+                        {uniqueRatees.length > 0 ? uniqueRatees.map(ratee => {
+                            const givenRating = findGivenRating(ride.id, ratee.id);
+                            return (
+                                <div key={ratee.id} className="feedback-item">
+                                    <span>Your Feedback for {ratee.name}:</span>
+                                    <div className="rating-display">
+                                    {givenRating ? (
+                                        <StarRatingDisplay score={givenRating.score} />
+                                    ) : (
+                                        hasDeparted ? (
+                                            <Button onClick={() => setSelectedRideForRating({ride, ratee})}>Rate</Button>
+                                        ) : (
+                                            <span className="rate-later-message">Rate after trip</span>
+                                        )
+                                    )}
+                                    </div>
+                                </div>
+                            )
+                        }) : <span style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>You were the only one on this ride.</span>}
+                      </div>
                     </div>
-                    <div className="history-ride-feedback">
-                      {uniqueRatees.length > 0 ? uniqueRatees.map(ratee => {
-                          const givenRating = findGivenRating(ride.id, ratee.id);
-                          return (
-                              <div key={ratee.id} className="feedback-item">
-                                  <span>Your Feedback for {ratee.name}:</span>
-                                  <div className="rating-display">
-                                  {givenRating ? (
-                                      <StarRatingDisplay score={givenRating.score} />
-                                  ) : (
-                                      hasDeparted ? (
-                                          <Button onClick={() => setSelectedRideForRating({ride, ratee})}>Rate</Button>
-                                      ) : (
-                                          <span className="rate-later-message">Rate after trip</span>
-                                      )
-                                  )}
-                                  </div>
-                              </div>
-                          )
-                      }) : <span style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>You were the only one on this ride.</span>}
+                  );
+                })}
+                {visibleRides < sortedRides.length && (
+                    <div className="load-more-container">
+                        <Button onClick={() => setVisibleRides(prev => prev + ITEMS_PER_PAGE)}>Load More</Button>
                     </div>
-                  </div>
-                );
-              })}
+                )}
+              </>
+            ) : (
+              <p>You have no completed rides in your history.</p>
+            )}
           </div>
         </div>
       </div>

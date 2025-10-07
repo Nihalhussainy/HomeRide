@@ -1,4 +1,4 @@
-/* src/components/RideRequestForm.css */
+/*
 
 .ride-request-container {
   background-color: var(--surface-color);
@@ -42,7 +42,7 @@
   gap: 16px;
 }
 
-/* NEW: Optional Stops Section Styling */
+
 .optional-stops-container {
   background-color: var(--background-color);
   border: 1px dashed var(--surface-color-light);
@@ -103,7 +103,7 @@
   color: var(--primary-color);
 }
 
-/* NEW: Custom styling for the dropdown menu */
+
 .custom-select {
   appearance: none;
   -webkit-appearance: none;
@@ -113,3 +113,4 @@
   background-position: right 1rem center;
   background-size: 1.2rem;
 }
+*/

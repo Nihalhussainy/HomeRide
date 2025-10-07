@@ -12,6 +12,8 @@ import {
   FiHeart,
   FiMapPin,
   FiCalendar,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
 
 import Button from "../components/Button.jsx";
@@ -19,19 +21,102 @@ import "./HomePage.css";
 
 import heroVideo from "../assets/hero-background.mp4";
 
+function Calendar({ selectedDate, onDateSelect, onClose }) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  const daysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+  
+  const firstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+  
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  
+  const goToPreviousMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+  };
+  
+  const goToNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+  };
+  
+  const selectToday = () => {
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    onDateSelect(dateString);
+    onClose();
+  };
+  
+  const days = [];
+  const totalDays = daysInMonth(currentMonth);
+  const firstDay = firstDayOfMonth(currentMonth);
+  const today = new Date();
+  
+  for (let i = 0; i < firstDay; i++) {
+    days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
+  }
+  
+  for (let day = 1; day <= totalDays; day++) {
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const isToday = date.toDateString() === today.toDateString();
+    const isSelected = dateString === selectedDate;
+    const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    days.push(
+      <div
+        key={day}
+        className={`calendar-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${isPast ? 'past' : ''}`}
+        onClick={() => {
+          if (!isPast) {
+            onDateSelect(dateString);
+            onClose();
+          }
+        }}
+      >
+        {day}
+      </div>
+    );
+  }
+  
+  return (
+    <div className="calendar-dropdown hero-calendar">
+      <div className="calendar-header">
+        <button type="button" className="today-button" onClick={selectToday}>Today</button>
+      </div>
+      <div className="calendar-navigation">
+        <button type="button" onClick={goToPreviousMonth}><FiChevronLeft /></button>
+        <span className="calendar-month">{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
+        <button type="button" onClick={goToNextMonth}><FiChevronRight /></button>
+      </div>
+      <div className="calendar-weekdays">
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+      </div>
+      <div className="calendar-days">
+        {days}
+      </div>
+    </div>
+  );
+}
+
 function HomePage() {
   const navigate = useNavigate();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const videoRef = useRef(null); // Ref for manual looping
+  const videoRef = useRef(null);
+  const calendarRef = useRef(null);
+  
+  const [travelDate, setTravelDate] = useState('');
+  const [showCalendar, setShowCalendar] = useState(false);
 
-  const heroImages = [
-    "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1464219789935-c2d9d9aba644?q=80&w=2070&auto=format&fit=crop",
-  ];
-
-  // Smooth manual video looping effect
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -47,28 +132,50 @@ function HomePage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [heroImages.length]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
       setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 6000);
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setShowCalendar(false);
+      }
+    };
+    
+    if (showCalendar) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCalendar]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     const origin = e.target.elements.origin.value;
     const destination = e.target.elements.destination.value;
-    const date = e.target.elements.date.value;
-    navigate(
-      `search?origin=${encodeURIComponent(
-        origin
-      )}&destination=${encodeURIComponent(destination)}&travelDateTime=${date}`
-    );
+    
+    const params = new URLSearchParams();
+    if (origin) params.append('origin', origin);
+    if (destination) params.append('destination', destination);
+    if (travelDate) params.append('travelDateTime', travelDate);
+    
+    navigate(`/search?${params.toString()}`);
+  };
+
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return 'mm/dd/yyyy';
+    const date = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    if (selectedDate.getTime() === today.getTime()) {
+      return 'Today';
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const testimonials = [
@@ -108,7 +215,6 @@ function HomePage() {
 
   return (
     <div className="homepage-container">
-      {/* Hero Section with manually looped video */}
       <section className="hero-section">
         <video
           ref={videoRef}
@@ -135,7 +241,6 @@ function HomePage() {
                 name="origin"
                 placeholder="Leaving from"
                 className="hero-search-input"
-                required
               />
             </div>
             <div className="search-input-wrapper">
@@ -145,12 +250,23 @@ function HomePage() {
                 name="destination"
                 placeholder="Going to"
                 className="hero-search-input"
-                required
               />
             </div>
-            <div className="search-input-wrapper">
+            <div className="search-input-wrapper" ref={calendarRef}>
               <FiCalendar className="input-icon" />
-              <input type="date" name="date" className="hero-search-input date" />
+              <div 
+                className="hero-search-input hero-date-display" 
+                onClick={() => setShowCalendar(!showCalendar)}
+              >
+                {formatDisplayDate(travelDate)}
+              </div>
+              {showCalendar && (
+                <Calendar 
+                  selectedDate={travelDate}
+                  onDateSelect={setTravelDate}
+                  onClose={() => setShowCalendar(false)}
+                />
+              )}
             </div>
             <Button type="submit" className="search-button">
               <FiSearch /> Search Rides
@@ -162,7 +278,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="features-section">
         <div className="feature-card" data-aos="fade-up">
           <div className="feature-icon-wrapper">
@@ -196,7 +311,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Benefits Section */}
       <section className="benefits-section">
         <h2>Why Choose HomeRide?</h2>
         <div className="benefits-grid">
@@ -247,7 +361,6 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Redesigned CTA Section with image */}
         <section className="inline-cta-box enhanced-cta">
           <div className="cta-img-wrapper">
             <img
@@ -268,7 +381,7 @@ function HomePage() {
               colleagues and start saving on travel costs today! 
             </p>
             <Button
-              onClick={() => navigate("dashboard")}
+              onClick={() => navigate("/offer-ride")}
               className="cta-inline-button"
             >
               Offer a Ride <FiArrowRight />
@@ -277,7 +390,6 @@ function HomePage() {
         </section>
       </section>
 
-      {/* How It Works Section */}
       <section className="how-it-works-section">
         <h2>How HomeRide Works</h2>
         <div className="steps-container">
@@ -318,8 +430,7 @@ function HomePage() {
           <div className="step">
             <div className="step-image">
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwBG1RpQ-lKYpgdo8117Q78nvFPJc563Ec1gutSG2ATdGDDkA3cJGKcVzEii2WqV1CPt6O_94c25pe707-Nx8-8MlZm18xUZ84MpaR6EpLYD1WAI4sEnhoRE_LKSP3CdIDaHngTl3P9ak4Ko9YAl8c8aGSAl6UMFWekqnxRTuW-yqJEuNIhLQPx2spdlC9S0jFKindOqdDsqHLNtFle2L_lyVNRx9MDStMdkL7f36bONxlyv9KqtYfYC-SIhtVpflTwZp8CrXZp_je
-"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwBG1RpQ-lKYpgdo8117Q78nvFPJc563Ec1gutSG2ATdGDDkA3cJGKcVzEii2WqV1CPt6O_94c25pe707-Nx8-8MlZm18xUZ84MpaR6EpLYD1WAI4sEnhoRE_LKSP3CdIDaHngTl3P9ak4Ko9YAl8c8aGSAl6UMFWekqnxRTuW-yqJEuNIhLQPx2spdlC9S0jFKindOqdDsqHLNtFle2L_lyVNRx9MDStMdkL7f36bONxlyv9KqtYfYC-SIhtVpflTwZp8CrXZp_je"
                 alt="Travel together"
               />
               <div className="step-image-overlay"></div>
@@ -336,7 +447,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Statistics Section */}
       <section className="stats-section">
         <div className="stat-item">
           <div className="stat-number">2,500</div>
@@ -356,7 +466,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
       <section className="testimonials-section">
         <h2>Community Voices</h2>
         <div className="testimonials-grid">
@@ -385,7 +494,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="homepage-footer">
         <div className="footer-content">
           <div className="footer-section">

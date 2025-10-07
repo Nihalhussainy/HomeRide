@@ -1,95 +1,257 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import RideCard from '../components/RideCard.jsx';
-import RideRequestForm from '../components/RideRequestForm.jsx';
 import '../App.css';
 import axios from 'axios';
+import { FiCalendar, FiPlusSquare, FiMapPin } from 'react-icons/fi';
 
 function DashboardPage() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [rides, setRides] = useState([]);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [upcomingRides, setUpcomingRides] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchData = useCallback(async (isFirstLoad = false) => {
+  const fetchData = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
     }
-    if (isFirstLoad) {
-      setIsInitialLoading(true);
-    }
+    setIsLoading(true);
 
     try {
-      const config = { 
-        headers: { 'Authorization': `Bearer ${token}` }
-      };
+      const config = { headers: { 'Authorization': `Bearer ${token}` } };
       
-      const [userResponse, ridesResponse] = await Promise.all([
+      const [userResponse, myRidesResponse] = await Promise.all([
         axios.get('http://localhost:8080/api/employees/me', config),
-        axios.get('http://localhost:8080/api/rides', config)
+        axios.get('http://localhost:8080/api/rides/my-rides', config)
       ]);
+      
       setCurrentUser(userResponse.data);
-      setRides(ridesResponse.data);
+
+      const futureRides = myRidesResponse.data.filter(ride => new Date(ride.travelDateTime) > new Date());
+      futureRides.sort((a, b) => new Date(a.travelDateTime) - new Date(b.travelDateTime));
+
+      setUpcomingRides(futureRides);
+
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch dashboard data:', error);
       localStorage.removeItem('token');
       navigate('/login');
     } finally {
-      if (isFirstLoad) {
-        setIsInitialLoading(false);
-      }
+      setIsLoading(false);
     }
   }, [navigate]);
 
   useEffect(() => {
-    fetchData(true);
+    fetchData();
   }, [fetchData]);
 
-  const offeredRides = rides
-    .filter(ride => ride.rideType === 'OFFERED')
-    .sort((a, b) => b.id - a.id);
-
-  const requestedRides = rides
-    .filter(ride => ride.rideType === 'REQUESTED')
-    .sort((a, b) => b.id - a.id);
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        fontSize: '18px',
+        color: 'var(--text-secondary)',
+        background: 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.03) 0%, transparent 50%), var(--background-color)'
+      }}>
+        Loading your dashboard...
+      </div>
+    );
+  }
 
   return (
-    <div className="main-container">
-      <header className="page-header">
-        <h1>Welcome, {currentUser ? currentUser.name : '...'}!</h1>
-      </header>
-      <main>
-        <RideRequestForm onRideCreated={fetchData} />
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: '60px 20px',
+      background: `
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(236, 72, 153, 0.03) 0%, transparent 50%),
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 60px,
+          rgba(255, 255, 255, 0.01) 60px,
+          rgba(255, 255, 255, 0.01) 120px
+        ),
+        var(--background-color)
+      `,
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Animated background elements */}
+      <div style={{
+        position: 'absolute',
+        top: '10%',
+        left: '5%',
+        width: '300px',
+        height: '300px',
+        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%)',
+        borderRadius: '50%',
+        filter: 'blur(40px)',
+        animation: 'float 20s ease-in-out infinite',
+        pointerEvents: 'none'
+      }} />
+      
+      <div style={{
+        position: 'absolute',
+        bottom: '15%',
+        right: '10%',
+        width: '400px',
+        height: '400px',
+        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%)',
+        borderRadius: '50%',
+        filter: 'blur(50px)',
+        animation: 'float 25s ease-in-out infinite reverse',
+        pointerEvents: 'none'
+      }} />
+
+      <style>
+        {`
+          @keyframes float {
+            0%, 100% {
+              transform: translate(0, 0) scale(1);
+            }
+            33% {
+              transform: translate(30px, -30px) scale(1.1);
+            }
+            66% {
+              transform: translate(-20px, 20px) scale(0.9);
+            }
+          }
+        `}
+      </style>
+
+      <div style={{
+        width: '100%',
+        maxWidth: '900px',
+        margin: '0 auto',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <h2 style={{ 
+          marginBottom: '40px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+          fontSize: '28px',
+          fontWeight: '600',
+          color: 'var(--text-primary)',
+          textShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+        }}>
+          <FiCalendar size={28} /> Your Upcoming Rides
+        </h2>
         
-        {isInitialLoading ? (
-          <p>Loading rides...</p>
+        {upcomingRides.length > 0 ? (
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '24px',
+            alignItems: 'center'
+          }}>
+            {upcomingRides.map((ride) => (
+              <RideCard 
+                key={ride.id} 
+                ride={ride} 
+                currentUser={currentUser} 
+                onActionSuccess={fetchData} 
+              />
+            ))}
+          </div>
         ) : (
-          <div className="ride-lists-container">
-            <div className="ride-list">
-              <h2>Rides Offered</h2>
-              {offeredRides.length > 0 ? (
-                offeredRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} currentUser={currentUser} onActionSuccess={fetchData} />
-                ))
-              ) : (
-                <p>No rides are being offered right now.</p>
-              )}
+          <div style={{
+            backgroundColor: 'var(--surface-color)',
+            padding: '80px 40px',
+            borderRadius: '16px',
+            textAlign: 'center',
+            border: '1px solid var(--surface-color-light)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            backdropFilter: 'blur(10px)',
+            background: 'rgba(255, 255, 255, 0.02)'
+          }}>
+            <div style={{
+              width: '120px',
+              height: '120px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 30px',
+              boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)'
+            }}>
+              <FiCalendar size={50} color="white" />
             </div>
-            <div className="ride-list">
-              <h2>Rides Requested</h2>
-              {requestedRides.length > 0 ? (
-                requestedRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} currentUser={currentUser} onActionSuccess={fetchData} />
-                ))
-              ) : (
-                <p>No one is requesting a ride right now.</p>
-              )}
+            
+            <h3 style={{ 
+              fontSize: '26px', 
+              fontWeight: '600',
+              marginBottom: '16px',
+              color: 'var(--text-primary)'
+            }}>
+              No upcoming rides scheduled
+            </h3>
+            
+            <p style={{ 
+              fontSize: '16px',
+              color: 'var(--text-secondary)',
+              marginBottom: '40px',
+              maxWidth: '500px',
+              margin: '0 auto 40px',
+              lineHeight: '1.7'
+            }}>
+              Ready for your next trip? You can find a ride offered by a colleague or offer one yourself.
+            </p>
+            
+            <div style={{
+              display: 'flex',
+              gap: '16px',
+              justifyContent: 'center',
+              flexWrap: 'wrap'
+            }}>
+              <Link 
+                to="/search" 
+                className="custom-button"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  textDecoration: 'none',
+                  padding: '12px 28px',
+                  fontSize: '15px',
+                  fontWeight: '600'
+                }}
+              >
+                <FiMapPin size={20} /> Find a Ride
+              </Link>
+              
+              <Link 
+                to="/offer-ride" 
+                className="custom-button secondary"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  textDecoration: 'none',
+                  padding: '12px 28px',
+                  fontSize: '15px',
+                  fontWeight: '600'
+                }}
+              >
+                <FiPlusSquare size={20} /> Offer a Ride
+              </Link>
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

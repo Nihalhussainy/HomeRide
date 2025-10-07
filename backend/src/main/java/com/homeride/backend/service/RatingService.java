@@ -35,7 +35,6 @@ public class RatingService {
         RideRequest rideRequest = rideRequestRepository.findById(ratingDTO.getRideRequestId())
                 .orElseThrow(() -> new RuntimeException("Ride not found"));
 
-        // ✅ NEW: Check if a rating from this rater to this ratee for this ride already exists
         if (ratingRepository.existsByRideRequestAndRaterAndRatee(rideRequest, rater, ratee)) {
             throw new IllegalStateException("You have already submitted a rating for this user on this ride.");
         }
@@ -49,16 +48,31 @@ public class RatingService {
 
         return ratingRepository.save(newRating);
     }
-    // Add this method
+
     public List<Rating> getRatingsForUser(String userEmail) {
         Employee employee = employeeRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return ratingRepository.findByRateeId(employee.getId());
     }
-    // Add this method
+
     public List<Rating> getRatingsGivenByUser(String raterEmail) {
         Employee rater = employeeRepository.findByEmail(raterEmail)
                 .orElseThrow(() -> new RuntimeException("Rater not found"));
         return ratingRepository.findByRater(rater);
+    }
+
+    // NEW: Calculate average rating for a user
+    public Double calculateAverageRating(Long employeeId) {
+        List<Rating> ratings = ratingRepository.findByRateeId(employeeId);
+
+        if (ratings == null || ratings.isEmpty()) {
+            return null;
+        }
+
+        double sum = ratings.stream()
+                .mapToDouble(Rating::getScore)
+                .sum();
+
+        return sum / ratings.size();
     }
 }
