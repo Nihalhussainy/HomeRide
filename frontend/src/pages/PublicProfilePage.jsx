@@ -17,6 +17,12 @@ function PublicProfilePage() {
     const [totalRides, setTotalRides] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
+    const extractCityName = (location) => {
+        if (!location) return '';
+        const parts = location.split(',');
+        return parts[0].trim();
+    };
+
     useEffect(() => {
         const fetchProfileData = async () => {
             setIsLoading(true);
@@ -102,7 +108,7 @@ function PublicProfilePage() {
                             ratings.map(rating => (
                                 <div key={rating.id} className="rating-card" style={{ backgroundColor: 'var(--surface-color)', padding: '15px', borderRadius: 'var(--border-radius)', marginBottom: '10px', border: '1px solid var(--surface-color-light)' }}>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '8px' }}>
-                                        From ride: <strong>{rating.rideRequest.origin} <FaArrowRight size={10} /> {rating.rideRequest.destination}</strong>
+                                        From ride: <strong>{rating.rideRequest.originCity || extractCityName(rating.rideRequest.origin)} <FaArrowRight size={10} /> {rating.rideRequest.destinationCity || extractCityName(rating.rideRequest.destination)}</strong>
                                     </p>
                                     <p><strong>"{rating.comment || 'No comment provided.'}"</strong></p>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>

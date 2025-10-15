@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class TravelInfo {
     private int durationInMinutes;
     private double distanceInKm;
+    private String polyline;
+    private String summary; // NEW: Add this field
 }
-

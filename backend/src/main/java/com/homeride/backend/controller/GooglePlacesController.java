@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -23,7 +24,25 @@ public class GooglePlacesController {
 
     @GetMapping("/autocomplete")
     public ResponseEntity<List<String>> getAutocompleteSuggestions(@RequestParam String query) {
-        List<String> suggestions = googlePlacesService.getAutocompleteSuggestions(query);
-        return ResponseEntity.ok(suggestions);
+        try {
+            if (query == null || query.trim().isEmpty()) {
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+
+            List<String> suggestions = googlePlacesService.getAutocompleteSuggestions(query);
+
+            // Always return a list, never null
+            if (suggestions == null) {
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+
+            System.out.println("Returning " + suggestions.size() + " suggestions for query: " + query);
+            return ResponseEntity.ok(suggestions);
+        } catch (Exception e) {
+            System.err.println("Error in autocomplete controller: " + e.getMessage());
+            e.printStackTrace();
+            // Return empty list instead of error to prevent frontend crashes
+            return ResponseEntity.ok(Collections.emptyList());
+        }
     }
 }

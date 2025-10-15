@@ -12,7 +12,7 @@ function ChatModal({ ride, currentUser, participants, onClose }) {
         <div className="chat-modal-header">
           <div className="chat-modal-title">
             <div className="ride-info-compact">
-              <h3>{ride.origin} <FiArrowRight className="arrow-icon" /> {ride.destination}</h3>
+              <h3>Ride Chat</h3>
               <div className="participant-count">
                 <FiUsers />
                 <span>{participants.length} participants</span>

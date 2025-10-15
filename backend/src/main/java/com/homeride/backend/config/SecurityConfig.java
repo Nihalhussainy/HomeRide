@@ -1,3 +1,4 @@
+// backend/config/SecurityConfig.java
 package com.homeride.backend.config;
 
 import com.homeride.backend.filter.JwtAuthenticationFilter;
@@ -45,13 +46,24 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
-                        // MODIFIED: Replaced old autocomplete with new Google Places endpoint
-                        .requestMatchers("/api/places/autocomplete").permitAll()
+                        .requestMatchers("/api/places/**").permitAll()
+                        .requestMatchers("/api/maps/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/api/rides/travel-info").permitAll()
+                        .requestMatchers("/api/rides/calculate-price").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/employees/{id}").permitAll()
+
+                        // Authenticated endpoints
                         .requestMatchers(HttpMethod.GET, "/api/rides").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/rides/my-rides").authenticated()
+
+                        // FIX: Explicitly allow authenticated users to offer a ride
+                        .requestMatchers(HttpMethod.POST, "/api/rides/offer").authenticated()
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/rides/{rideId}").authenticated()
                         .requestMatchers("/api/rides/**").authenticated()
                         .requestMatchers("/api/ratings/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -59,8 +71,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/employees/me/profile-picture").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/employees/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/chat/history/**").authenticated()
-                        .anyRequest().authenticated()
 
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

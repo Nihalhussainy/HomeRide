@@ -1,11 +1,12 @@
 package com.homeride.backend.repository;
 
+import com.homeride.backend.model.Employee;
 import com.homeride.backend.model.Rating;
+import com.homeride.backend.model.RideRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
-import com.homeride.backend.model.Employee;
-import com.homeride.backend.model.RideRequest;
 
 @Repository
 public interface RatingRepository extends JpaRepository<Rating, Long> {

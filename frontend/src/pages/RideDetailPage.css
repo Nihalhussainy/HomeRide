@@ -709,3 +709,141 @@
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
+/* Add these new styles to src/pages/RideDetailPage.css */
+
+/* .timeline-item.interactive .timeline-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.timeline-actions button {
+  background: var(--surface-color-light);
+  border: 1px solid var(--surface-color-light);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.timeline-actions button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.timeline-actions button.selected {
+  color: white;
+}
+
+.timeline-actions button.pickup-btn.selected {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+.timeline-actions button.dropoff-btn.selected {
+  background-color: #ef4444;
+  border-color: #ef4444;
+} */
+
+.stop-circle {
+    width: 10px;
+    height: 10px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+}
+
+.price-display .segment-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    display: block;
+}
+/* Add these new styles to src/pages/RideDetailPage.css */
+
+.overview-point {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.overview-connector {
+  grid-column: 1;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  height: 60px;
+}
+
+.overview-connector::before {
+  content: '';
+  width: 2px;
+  height: 100%;
+  background: var(--surface-color-light);
+}
+
+.duration-pill {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface-color);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border: 1px solid var(--surface-color-light);
+}
+
+.overview-point-details {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+
+.point-city {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.point-address {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.overview-stops {
+    padding-left: 18px; /* Align with the connector line */
+    margin: 10px 0;
+}
+
+.stop-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+}
+
+.stop-icon {
+    width: 8px;
+    height: 8px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.stop-name {
+    font-weight: 500;
+}

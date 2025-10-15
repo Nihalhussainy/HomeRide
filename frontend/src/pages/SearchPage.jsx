@@ -662,7 +662,7 @@ function SearchPage() {
       );
     }
     
-    if (rides.length > 0) {
+   if (rides.length > 0) {
       return (
         <div style={{ animation: 'fadeIn 0.4s ease' }}>
           <div style={{
@@ -677,13 +677,29 @@ function SearchPage() {
             }}>
               {rides.length} ride{rides.length !== 1 ? 's' : ''} found
             </h2>
+            {origin && destination && (
+              <p style={{
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                marginTop: '8px'
+              }}>
+                Showing rides from {origin} to {destination}
+              </p>
+            )}
           </div>
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '20px'
           }}>
-            {rides.map(ride => <SimpleRideCard key={ride.id} ride={ride} />)}
+            {rides.map(ride => (
+              <SimpleRideCard 
+                key={ride.id} 
+                ride={ride}
+                searchOrigin={origin}
+                searchDestination={destination}
+              />
+            ))}
           </div>
         </div>
       );

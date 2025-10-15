@@ -20,12 +20,21 @@ public class RideParticipant {
 
     @ManyToOne
     @JoinColumn(name = "ride_request_id", nullable = false)
-    @JsonBackReference // CORRECTED: Changed from @JsonIgnore
+    @JsonBackReference
     private RideRequest rideRequest;
 
     @ManyToOne
     @JoinColumn(name = "participant_id", nullable = false)
     private Employee participant;
+
+    @Column(nullable = false)
+    private String pickupPoint;
+
+    @Column(nullable = false)
+    private String dropoffPoint;
+
+    @Column
+    private Double price;
 
     @Column(updatable = false)
     private LocalDateTime joinedAt;

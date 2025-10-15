@@ -9,8 +9,9 @@
     position: absolute;
     top: 100%;
     left: 0;
+    right: 0;
     width: 100%;
-    z-index: 50;
+    z-index: 1000; /* Increased z-index */
     list-style: none;
     margin: 0;
     padding: 0;
@@ -18,8 +19,8 @@
     border: 1px solid var(--surface-color-light);
     border-top: none;
     border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    max-height: 200px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    max-height: 250px;
     overflow-y: auto;
     backdrop-filter: blur(5px);
 }
@@ -37,6 +38,10 @@
     border-radius: 3px;
 }
 
+.suggestions-list::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}
+
 .suggestions-list li {
     padding: 12px 16px;
     cursor: pointer;
@@ -45,30 +50,46 @@
     gap: 12px;
     transition: background-color 0.2s;
     color: var(--text-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.suggestions-list li:last-child {
+    border-bottom: none;
 }
 
 .suggestions-list li:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.suggestions-list li:active {
+    background-color: rgba(255, 255, 255, 0.12);
 }
 
 .suggestions-list .suggestion-icon {
     color: var(--primary-color);
+    flex-shrink: 0;
 }
 
 .loading-item, .no-results-item {
     padding: 12px 16px;
     font-style: italic;
     color: var(--text-secondary);
+    text-align: center;
 }
 
-/* Specific styling for when AutocompleteInput is used */
+/* When suggestions are showing, round the bottom of the input */
 .autocomplete-wrapper .custom-input {
+    transition: border-radius 0.2s;
+}
+
+.autocomplete-wrapper:has(.suggestions-list) .custom-input {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-    border-bottom-color: transparent;
 }
 
-.autocomplete-wrapper:not(:focus-within) .custom-input {
-    border-radius: var(--border-radius);
-    border-bottom-color: var(--surface-color-light);
+/* Ensure the input stands out when focused */
+.autocomplete-wrapper .custom-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }

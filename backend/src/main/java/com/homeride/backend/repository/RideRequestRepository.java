@@ -2,6 +2,7 @@ package com.homeride.backend.repository;
 
 import com.homeride.backend.model.Employee;
 import com.homeride.backend.model.RideRequest;
+import com.homeride.backend.model.Stopover;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,29 +18,30 @@ import java.util.Optional;
 @Repository
 public interface RideRequestRepository extends JpaRepository<RideRequest, Long>, JpaSpecificationExecutor<RideRequest> {
 
-    // FIXED: Removed "stops" from EntityGraph - stops is @ElementCollection, not an entity relationship
+    // FIXED: Added "stopovers" to EntityGraph
     @Override
-    @EntityGraph(attributePaths = {"requester", "driver", "participants.participant"})
+    @EntityGraph(attributePaths = {"requester", "driver", "participants.participant", "stopovers"})
     List<RideRequest> findAll();
 
-    @EntityGraph(attributePaths = {"requester", "driver", "participants.participant"})
+    @EntityGraph(attributePaths = {"requester", "driver", "participants.participant", "stopovers"})
     List<RideRequest> findAll(Specification<RideRequest> spec);
 
-    @EntityGraph(attributePaths = {"requester", "driver", "participants.participant"})
+    @EntityGraph(attributePaths = {"requester", "driver", "participants.participant", "stopovers"})
     Optional<RideRequest> findById(Long id);
 
-    // Custom query methods for location-based searching
-    @Query("SELECT r FROM RideRequest r WHERE " +
+    // FIXED: Updated to use stopovers instead of stops
+    @Query("SELECT DISTINCT r FROM RideRequest r LEFT JOIN r.stopovers s WHERE " +
             "(LOWER(r.origin) LIKE LOWER(CONCAT('%', :location, '%')) OR " +
             "LOWER(r.destination) LIKE LOWER(CONCAT('%', :location, '%')) OR " +
-            "EXISTS (SELECT s FROM r.stops s WHERE LOWER(s) LIKE LOWER(CONCAT('%', :location, '%'))))")
+            "LOWER(s.point) LIKE LOWER(CONCAT('%', :location, '%')))")
     List<RideRequest> findByLocationInPath(@Param("location") String location);
 
-    @Query("SELECT r FROM RideRequest r WHERE " +
+    // FIXED: Updated to use stopovers instead of stops
+    @Query("SELECT DISTINCT r FROM RideRequest r LEFT JOIN r.stopovers s WHERE " +
             "((LOWER(r.origin) LIKE LOWER(CONCAT('%', :origin, '%')) OR " +
-            "EXISTS (SELECT s FROM r.stops s WHERE LOWER(s) LIKE LOWER(CONCAT('%', :origin, '%')))) AND " +
+            "LOWER(s.point) LIKE LOWER(CONCAT('%', :origin, '%'))) AND " +
             "(LOWER(r.destination) LIKE LOWER(CONCAT('%', :destination, '%')) OR " +
-            "EXISTS (SELECT s FROM r.stops s WHERE LOWER(s) LIKE LOWER(CONCAT('%', :destination, '%')))))")
+            "LOWER(s.point) LIKE LOWER(CONCAT('%', :destination, '%'))))")
     List<RideRequest> findByOriginAndDestinationInPath(@Param("origin") String origin, @Param("destination") String destination);
 
     long countByRequester(Employee requester);
@@ -55,49 +57,64 @@ public interface RideRequestRepository extends JpaRepository<RideRequest, Long>,
             return (root, query, cb) -> cb.like(cb.lower(root.get("destination")), "%" + destination.toLowerCase() + "%");
         }
 
-        // Simple specification for stops matching
+        // FIXED: Updated to use stopovers entity instead of stops collection
         static Specification<RideRequest> hasStop(String stop) {
             return (root, query, cb) -> {
-                return cb.isMember(stop, root.get("stops"));
+                var stopoverJoin = root.join("stopovers");
+                return cb.like(cb.lower(stopoverJoin.get("point")), "%" + stop.toLowerCase() + "%");
             };
         }
 
-        // New specification that checks if a location appears anywhere in the ride path
+        // FIXED: Updated to use stopovers instead of stops
         static Specification<RideRequest> passesThrough(String location) {
             return (root, query, cb) -> {
+                var subquery = query.subquery(Long.class);
+                var subRoot = subquery.from(Stopover.class);
+                subquery.select(cb.literal(1L))
+                        .where(
+                                cb.equal(subRoot.get("rideRequest"), root),
+                                cb.like(cb.lower(subRoot.get("point")), "%" + location.toLowerCase() + "%")
+                        );
+
                 return cb.or(
                         cb.like(cb.lower(root.get("origin")), "%" + location.toLowerCase() + "%"),
                         cb.like(cb.lower(root.get("destination")), "%" + location.toLowerCase() + "%"),
-                        cb.exists(
-                                query.subquery(String.class)
-                                        .select(cb.literal("1"))
-                                        .where(cb.like(cb.lower(root.join("stops")), "%" + location.toLowerCase() + "%"))
-                        )
+                        cb.exists(subquery)
                 );
             };
         }
 
-        // Specification to check if a ride can accommodate a journey from origin to destination
+        // FIXED: Updated to use stopovers instead of stops
         static Specification<RideRequest> canAccommodateJourney(String origin, String destination) {
             return (root, query, cb) -> {
+                // Subquery for origin in stopovers
+                var originSubquery = query.subquery(Long.class);
+                var originSubRoot = originSubquery.from(Stopover.class);
+                originSubquery.select(cb.literal(1L))
+                        .where(
+                                cb.equal(originSubRoot.get("rideRequest"), root),
+                                cb.like(cb.lower(originSubRoot.get("point")), "%" + origin.toLowerCase() + "%")
+                        );
+
+                // Subquery for destination in stopovers
+                var destSubquery = query.subquery(Long.class);
+                var destSubRoot = destSubquery.from(Stopover.class);
+                destSubquery.select(cb.literal(1L))
+                        .where(
+                                cb.equal(destSubRoot.get("rideRequest"), root),
+                                cb.like(cb.lower(destSubRoot.get("point")), "%" + destination.toLowerCase() + "%")
+                        );
+
                 return cb.and(
                         cb.or(
                                 cb.like(cb.lower(root.get("origin")), "%" + origin.toLowerCase() + "%"),
                                 cb.like(cb.lower(root.get("destination")), "%" + origin.toLowerCase() + "%"),
-                                cb.exists(
-                                        query.subquery(String.class)
-                                                .select(cb.literal("1"))
-                                                .where(cb.like(cb.lower(root.join("stops")), "%" + origin.toLowerCase() + "%"))
-                                )
+                                cb.exists(originSubquery)
                         ),
                         cb.or(
                                 cb.like(cb.lower(root.get("origin")), "%" + destination.toLowerCase() + "%"),
                                 cb.like(cb.lower(root.get("destination")), "%" + destination.toLowerCase() + "%"),
-                                cb.exists(
-                                        query.subquery(String.class)
-                                                .select(cb.literal("1"))
-                                                .where(cb.like(cb.lower(root.join("stops")), "%" + destination.toLowerCase() + "%"))
-                                )
+                                cb.exists(destSubquery)
                         )
                 );
             };
@@ -119,7 +136,6 @@ public interface RideRequestRepository extends JpaRepository<RideRequest, Long>,
             return (root, query, cb) -> cb.greaterThan(root.get("travelDateTime"), dateTime);
         }
 
-        // Additional helper specifications
         static Specification<RideRequest> isPending() {
             return (root, query, cb) -> cb.equal(root.get("status"), "PENDING");
         }

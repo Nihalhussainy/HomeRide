@@ -31,6 +31,12 @@ function ProfilePage() {
   const [visibleRatings, setVisibleRatings] = useState(ITEMS_PER_PAGE);
   const [visibleRides, setVisibleRides] = useState(ITEMS_PER_PAGE);
 
+  const extractCityName = useCallback((location) => {
+    if (!location) return '';
+    const parts = location.split(',');
+    return parts[0].trim();
+  }, []);
+
   const fetchData = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -295,7 +301,7 @@ function ProfilePage() {
                 {sortedRatings.slice(0, visibleRatings).map(rating => (
                   <div key={rating.id} className="rating-card" style={{backgroundColor: 'var(--surface-color)', padding: '15px', borderRadius: 'var(--border-radius)', marginBottom: '10px', border: '1px solid var(--surface-color-light)'}}>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '8px' }}>
-                      For ride: <strong>{rating.rideRequest.origin} <FaArrowRight size={10} /> {rating.rideRequest.destination}</strong>
+                      For ride: <strong>{rating.rideRequest.originCity || extractCityName(rating.rideRequest.origin)} <FaArrowRight size={10} /> {rating.rideRequest.destinationCity || extractCityName(rating.rideRequest.destination)}</strong>
                     </p>
                     <p><strong>"{rating.comment || 'No comment provided.'}"</strong></p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -337,7 +343,7 @@ function ProfilePage() {
                   return (
                     <div key={ride.id} className="history-ride-card">
                       <div className="history-ride-info">
-                        <p><strong>{ride.origin} to {ride.destination}</strong></p>
+                        <p><strong>{ride.originCity || extractCityName(ride.origin)} to {ride.destinationCity || extractCityName(ride.destination)}</strong></p>
                         <p style={{color: 'var(--text-secondary)'}}>Date: {new Date(ride.travelDateTime).toLocaleString()}</p>
                       </div>
                       <div className="history-ride-feedback">

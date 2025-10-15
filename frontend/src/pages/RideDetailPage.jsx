@@ -1,21 +1,28 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+// src/pages/RideDetailPage.jsx
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Stomp } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 import Button from '../components/Button.jsx';
-import ChatBox from '../components/ChatBox.jsx';
 import PublicProfileModal from '../components/PublicProfileModal.jsx';
+import ChatModal from '../components/ChatModal.jsx';
+import BookingConfirmationModal from '../components/BookingConfirmationModal.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
-import { FaUserCircle, FaCar, FaWhatsapp } from 'react-icons/fa'; 
-import { FiClock, FiUsers, FiMapPin, FiArrowRight, FiCheckCircle, FiShield, FiMessageSquare, FiInfo, FiNavigation, FiPhone, FiUser, FiX } from 'react-icons/fi';
+import { FaUserCircle, FaWhatsapp } from 'react-icons/fa';
+import { FiClock, FiUsers, FiMapPin, FiArrowRight, FiCheckCircle, FiShield, FiMessageSquare, FiInfo, FiNavigation, FiUser } from 'react-icons/fi';
 import './RideDetailPage.css';
+import { GoogleMap, useJsApiLoader, DirectionsRenderer, MarkerF } from '@react-google-maps/api';
 
+const mapContainerStyle = {
+    width: '100%',
+    height: '400px',
+    borderRadius: '12px',
+};
 
 function RideDetailPage() {
-    // --- STATE AND REFS ---
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { showNotification } = useNotification();
 
     const [ride, setRide] = useState(null);
@@ -23,15 +30,36 @@ function RideDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [isActionLoading, setIsActionLoading] = useState(false);
-    const [showChatModal, setShowChatModal] = useState(false);
     const [selectedProfileId, setSelectedProfileId] = useState(null);
-    const [messages, setMessages] = useState([]);
-    const [stompClient, setStompClient] = useState(null);
-    const [isConnected, setIsConnected] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
-    const isChatOpenRef = useRef(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [showBookingModal, setShowBookingModal] = useState(false);
+    const [directions, setDirections] = useState(null);
 
-    // --- DATA FETCHING and WEBSOCKETS ---
+    // Segment selection state
+    const [pickupPoint, setPickupPoint] = useState(null);
+    const [dropoffPoint, setDropoffPoint] = useState(null);
+    const [segmentPrice, setSegmentPrice] = useState(null);
+
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script-detail',
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    });
+
+    // Get search context from URL params or location.state
+    const searchContext = useMemo(() => {
+        const fromUrl = {
+            searchOrigin: searchParams.get('searchOrigin'),
+            searchDestination: searchParams.get('searchDestination')
+        };
+        
+        const fromState = location.state || {};
+        
+        return {
+            searchOrigin: fromUrl.searchOrigin || fromState.searchOrigin,
+            searchDestination: fromUrl.searchDestination || fromState.searchDestination
+        };
+    }, [searchParams, location.state]);
+
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -45,112 +73,113 @@ function RideDetailPage() {
                 axios.get(`http://localhost:8080/api/rides/${id}`, config),
                 axios.get(`http://localhost:8080/api/employees/me`, config),
             ]);
-            setRide(rideResponse.data);
+            const rideData = rideResponse.data;
+            setRide(rideData);
             setCurrentUser(userResponse.data);
+
+            const userSegment = rideData.participants.find(p => p.participant.id === userResponse.data.id);
+            
+            if (searchContext.searchOrigin && searchContext.searchDestination) {
+                setPickupPoint(searchContext.searchOrigin);
+                setDropoffPoint(searchContext.searchDestination);
+            } else if (userSegment && userSegment.pickupPoint && userSegment.dropoffPoint) {
+                setPickupPoint(userSegment.pickupPoint);
+                setDropoffPoint(userSegment.dropoffPoint);
+                setSegmentPrice(userSegment.price);
+            } else {
+                setPickupPoint(rideData.origin);
+                setDropoffPoint(rideData.destination);
+                setSegmentPrice(rideData.price);
+            }
+
             setError('');
         } catch (err) {
-            setError('Failed to load ride details. The ride may no longer exist.');
+            console.error('fetchData error:', err);
+            setError('Failed to load ride details.');
         } finally {
             setIsLoading(false);
         }
-    }, [id, navigate]);
+    }, [id, navigate, searchContext.searchOrigin, searchContext.searchDestination]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    useEffect(() => {
-        isChatOpenRef.current = showChatModal;
-    }, [showChatModal]);
+    const driver = useMemo(() => (ride ? ride.requester : null), [ride]);
 
-    // Derived State (calculated from component state)
-    const driver = useMemo(() => (ride ? (ride.rideType === 'OFFERED' ? ride.requester : ride.driver) : null), [ride]);
-    
     const allParticipants = useMemo(() => {
         if (!ride || !driver) return [];
         const participants = ride.participants.map(p => p.participant);
-        participants.unshift(driver); // Driver is always a participant
+        participants.unshift(driver);
         return [...new Map(participants.map(item => [item.id, item])).values()];
     }, [ride, driver]);
 
+    const isUserDriver = useMemo(() => {
+        return currentUser && driver && currentUser.id === driver.id;
+    }, [currentUser, driver]);
+
     const isUserInvolved = useMemo(() => {
-        if (!currentUser || !allParticipants) return false;
-        return allParticipants.some(p => p.id === currentUser.id);
-    }, [currentUser, allParticipants]);
+        if (!currentUser || !ride) return false;
+        return ride.participants.some(p => p.participant.id === currentUser.id);
+    }, [currentUser, ride]);
 
-    useEffect(() => {
-        if (!id || !currentUser || !isUserInvolved) return;
+    const routePoints = useMemo(() => {
+        if (!ride) return [];
+        return [ride.origin, ...(ride.stopovers || []).map(s => s.point), ride.destination];
+    }, [ride]);
 
-        const fetchChatHistory = async () => {
-            const token = localStorage.getItem('token');
-            try {
-                const response = await axios.get(`http://localhost:8080/api/chat/history/${id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                setMessages(response.data || []);
-            } catch (error) { console.error('Failed to fetch chat history:', error); }
-        };
-        fetchChatHistory();
+    const routeCities = useMemo(() => {
+        if (!ride) return [];
+        return [ride.originCity, ...(ride.stopovers || []).map(s => s.city), ride.destinationCity];
+    }, [ride]);
 
-        const token = localStorage.getItem('token');
-        const socket = new SockJS('http://localhost:8080/ws');
-        const client = Stomp.over(socket);
-        const headers = { Authorization: `Bearer ${token}` };
-
-        client.connect(headers, () => {
-            setIsConnected(true);
-            setStompClient(client);
-            client.subscribe(`/topic/ride.${id}`, (message) => {
-                const receivedMessage = JSON.parse(message.body);
-                setMessages(prev => {
-                    if (prev.some(msg => msg.id === receivedMessage.id)) return prev;
-                    if (!isChatOpenRef.current && receivedMessage.senderEmail !== currentUser.email) {
-                        setUnreadCount(prevUnread => prevUnread + 1);
-                    }
-                    return [...prev, receivedMessage];
-                });
-            });
-        }, () => { setIsConnected(false); });
-
-        return () => { if (client && client.connected) client.disconnect(); };
-    }, [id, currentUser, isUserInvolved]);
-
-    // --- EVENT HANDLERS ---
-    const handleContactDriver = () => {
-        if (driver && driver.phoneNumber) {
-            const phoneNumber = driver.phoneNumber.replace(/\D/g, '');
-            const whatsappUrl = `https://wa.me/91${phoneNumber}`; // Assuming Indian numbers
-            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-        } else {
-            showNotification("Driver's phone number is not available.", 'error');
+    const extractMainCity = useCallback((location) => {
+        if (!location) return '';
+        const normalized = location.toLowerCase().trim();
+        
+        const cities = ['mumbai', 'chennai', 'tirupati', 'kerala', 'bangalore', 
+                       'hyderabad', 'delhi', 'kolkata', 'pune', 'ahmedabad'];
+        
+        for (const city of cities) {
+            if (normalized.includes(city)) return city;
         }
-    };
-    
-    const handleBookOrJoin = async () => {
-        setIsActionLoading(true);
-        const token = localStorage.getItem('token');
-        try {
-            await axios.post(`http://localhost:8080/api/rides/${ride.id}/join`, {}, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            showNotification('Successfully joined the ride!');
-            fetchData(); // Refresh data to show you've joined
-        } catch (error) {
-            showNotification(error.response?.data?.message || 'Failed to join ride.', 'error');
-        } finally {
-            setIsActionLoading(false);
+        
+        const parts = normalized.split(',');
+        return parts[0].trim();
+    }, []);
+
+    const locationsMatch = useCallback((loc1, loc2) => {
+        if (!loc1 || !loc2) return false;
+        
+        const l1 = loc1.toLowerCase().trim();
+        const l2 = loc2.toLowerCase().trim();
+        
+        if (l1 === l2) return true;
+        if (l1.includes(l2) || l2.includes(l1)) return true;
+        
+        const city1 = extractMainCity(loc1);
+        const city2 = extractMainCity(loc2);
+        
+        return city1 === city2 && city1.length >= 3;
+    }, [extractMainCity]);
+
+    const getCityFromPoint = useCallback((point) => {
+        if (!ride || !point) return '';
+        
+        const pointIndex = routePoints.indexOf(point);
+        if (pointIndex !== -1 && routeCities[pointIndex]) {
+            return routeCities[pointIndex];
         }
-    };
+        
+        for (let i = 0; i < routePoints.length; i++) {
+            if (locationsMatch(routePoints[i], point)) {
+                return routeCities[i];
+            }
+        }
+        
+        return point.split(',')[0];
+    }, [ride, routePoints, routeCities, locationsMatch]);
 
-    // --- RENDER LOGIC ---
-    if (isLoading) return <div className="main-container"><p>Loading ride details...</p></div>;
-    if (error) return <div className="main-container"><p className="error-message">{error}</p></div>;
-    if (!ride || !currentUser || !driver) return <div className="main-container"><p>Could not load complete ride data.</p></div>;
-
-    const isRideFull = ride.vehicleCapacity != null && ride.participants.length >= ride.vehicleCapacity;
-    const formatTime = (dateTime) => new Date(dateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-    const formatDate = (dateTime) => new Date(dateTime).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
-    const calculateArrivalTime = () => new Date(new Date(ride.travelDateTime).getTime() + (ride.duration || 0) * 60000);
     const formatDuration = (minutes) => {
         if (!minutes) return 'N/A';
         const h = Math.floor(minutes / 60);
@@ -158,52 +187,302 @@ function RideDetailPage() {
         return h > 0 ? `${h}h ${m}m` : `${m}m`;
     };
 
-    const renderActionButton = () => {
-        if (isUserInvolved) return <div className="status-tag joined"><FiCheckCircle/> You are in this ride</div>;
-        if (isRideFull) return <div className="status-tag full">Ride is full</div>;
-        return <Button onClick={handleBookOrJoin} disabled={isActionLoading}>{isActionLoading ? 'Booking...' : 'Book Seat'}</Button>;
+    const calculateSegmentPrice = useCallback(() => {
+        if (!ride || !pickupPoint || !dropoffPoint) return;
+
+        let pickupIndex = -1;
+        let dropoffIndex = -1;
+
+        for (let i = 0; i < routePoints.length; i++) {
+            if (pickupIndex === -1 && locationsMatch(routePoints[i], pickupPoint)) {
+                pickupIndex = i;
+            }
+            if (pickupIndex !== -1 && locationsMatch(routePoints[i], dropoffPoint)) {
+                dropoffIndex = i;
+                break;
+            }
+        }
+
+        if (pickupIndex === -1 || dropoffIndex === -1 || pickupIndex >= dropoffIndex) {
+            setSegmentPrice(ride.price);
+            return;
+        }
+
+        if (pickupIndex === 0 && dropoffIndex === routePoints.length - 1) {
+            setSegmentPrice(ride.price);
+            return;
+        }
+
+        if (ride.stopoverPrices && ride.stopoverPrices.length > 0) {
+            let totalPrice = 0;
+            for (let i = pickupIndex; i < dropoffIndex; i++) {
+                totalPrice += (ride.stopoverPrices[i] || 0);
+            }
+            setSegmentPrice(Math.max(20, totalPrice));
+        } else if (ride.pricePerKm && ride.distance) {
+            const segmentRatio = (dropoffIndex - pickupIndex) / (routePoints.length - 1);
+            const calculatedPrice = Math.round((ride.price * segmentRatio) / 10) * 10;
+            setSegmentPrice(Math.max(20, calculatedPrice));
+        } else {
+            setSegmentPrice(ride.price);
+        }
+    }, [pickupPoint, dropoffPoint, ride, routePoints, locationsMatch]);
+
+    useEffect(() => {
+        calculateSegmentPrice();
+    }, [calculateSegmentPrice]);
+
+    useEffect(() => {
+        if (isLoaded && ride) {
+            const directionsService = new window.google.maps.DirectionsService();
+            const waypoints = (ride.stopovers || []).map(stop => ({ location: stop.point, stopover: true }));
+            
+            directionsService.route(
+                {
+                    origin: ride.origin,
+                    destination: ride.destination,
+                    waypoints: waypoints,
+                    travelMode: 'DRIVING'
+                },
+                (result, status) => {
+                    if (status === 'OK') {
+                        setDirections(result);
+                    } else {
+                        console.error(`Error fetching directions: ${status}`);
+                    }
+                }
+            );
+        }
+    }, [isLoaded, ride]);
+
+    const handleContactDriver = () => {
+        if (driver && driver.phoneNumber) {
+            const phoneNumber = driver.phoneNumber.replace(/\D/g, '');
+            const whatsappUrl = `https://wa.me/91${phoneNumber}`;
+            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        } else {
+            showNotification("Driver's phone number is not available.", 'error');
+        }
     };
+
+    const handleBookOrJoin = async () => {
+        let pickupIndex = -1;
+        let dropoffIndex = -1;
+
+        for (let i = 0; i < routePoints.length; i++) {
+            if (pickupIndex === -1 && locationsMatch(routePoints[i], pickupPoint)) {
+                pickupIndex = i;
+            }
+            if (pickupIndex !== -1 && locationsMatch(routePoints[i], dropoffPoint)) {
+                dropoffIndex = i;
+                break;
+            }
+        }
+
+        if (pickupIndex === -1 || dropoffIndex === -1 || pickupIndex >= dropoffIndex) {
+            showNotification('Please select valid pickup and drop-off points.', 'error');
+            return;
+        }
+
+        setIsActionLoading(true);
+        const token = localStorage.getItem('token');
+        try {
+            const body = {
+                pickupPoint: routePoints[pickupIndex],
+                dropoffPoint: routePoints[dropoffIndex],
+                price: segmentPrice
+            };
+            await axios.post(`http://localhost:8080/api/rides/${id}/join`, body, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            showNotification('Successfully booked your segment!', 'success');
+            setShowBookingModal(false);
+            await fetchData();
+        } catch (error) {
+            console.error('join error:', error);
+            showNotification(error.response?.data?.message || 'Failed to book ride.', 'error');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    const renderActionButton = () => {
+        if (isUserDriver) {
+            return null;
+        }
+
+        if (isUserInvolved) {
+            return <div className="status-tag joined"><FiCheckCircle/> You are in this ride</div>;
+        }
+        
+        let pickupIndex = -1;
+        let dropoffIndex = -1;
+        for (let i = 0; i < routePoints.length; i++) {
+            if (pickupIndex === -1 && locationsMatch(routePoints[i], pickupPoint)) {
+                pickupIndex = i;
+            }
+            if (pickupIndex !== -1 && locationsMatch(routePoints[i], dropoffPoint)) {
+                dropoffIndex = i;
+                break;
+            }
+        }
+        
+        const validSelection = pickupIndex !== -1 && dropoffIndex !== -1 && pickupIndex < dropoffIndex;
+        
+        if (ride.vehicleCapacity != null && ride.participants.length >= ride.vehicleCapacity) {
+            return <div className="status-tag full">Ride is full</div>;
+        }
+        return (
+            <Button onClick={() => setShowBookingModal(true)} disabled={!validSelection}>
+                Book Seat
+            </Button>
+        );
+    };
+
+    const formatTime = (dateTime) => new Date(dateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const formatDate = (dateTime) => new Date(dateTime).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    if (isLoading) return <div className="main-container"><p>Loading ride details...</p></div>;
+    if (error) return <div className="main-container"><p className="error-message">{error}</p></div>;
+    if (!ride || !currentUser || !driver) return <div className="main-container"><p>Could not load ride data.</p></div>;
 
     return (
         <div className="main-container ride-detail-page">
+            <header className="page-header">
+                <h1>{getCityFromPoint(pickupPoint)} <FiArrowRight/> {getCityFromPoint(dropoffPoint)}</h1>
+                <p className="page-description">{formatDate(ride.travelDateTime)}</p>
+            </header>
+
             <div className="detail-grid">
                 <div className="detail-main-content">
-                    <header className="page-header">
-                        <h1>{ride.origin} <FiArrowRight/> {ride.destination}</h1>
-                        <p className="page-description">{formatDate(ride.travelDateTime)}</p>
-                    </header>
+                    <div className="detail-card">
+                        <h3><FiMapPin /> Route Map</h3>
+                        <p style={{fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '-10px', marginBottom: '15px'}}>
+                            Showing route with all stops marked
+                        </p>
+                        {isLoaded ? (
+                            <GoogleMap
+                                mapContainerStyle={mapContainerStyle}
+                                center={{ lat: 20.5937, lng: 78.9629 }}
+                                zoom={5}
+                            >
+                                {directions && <DirectionsRenderer directions={directions} />}
+                                {ride.stopovers && ride.stopovers.map((stop, index) => (
+                                    stop.lat && stop.lng && <MarkerF key={index} position={{ lat: stop.lat, lng: stop.lng }} />
+                                ))}
+                            </GoogleMap>
+                        ) : <div>Loading map...</div>}
+                    </div>
 
                     <div className="detail-card">
                         <h3><FiInfo /> Trip Overview</h3>
                         <div className="trip-timeline">
-                            <div className="timeline-item">
-                                <div className="timeline-icon-wrapper"><div className="timeline-icon origin"><FiMapPin /></div></div>
-                                <div className="timeline-content"><div className="timeline-location-header"><h4>{ride.origin}</h4><span className="timeline-time">{formatTime(ride.travelDateTime)}</span></div><p className="address">{ride.origin}</p></div>
-                            </div>
-                            {ride.stops && ride.stops.map((stop, index) => (<div key={index} className="timeline-item"><div className="timeline-icon-wrapper"><div className="timeline-icon stop"></div></div><div className="timeline-content"><p className="address">{stop}</p></div></div>))}
-                            <div className="timeline-item">
-                                <div className="timeline-icon-wrapper"><div className="timeline-icon destination"><FiNavigation /></div></div>
-                                <div className="timeline-content"><div className="timeline-location-header"><h4>{ride.destination}</h4><span className="timeline-time">{formatTime(calculateArrivalTime())}</span></div><p className="address">{ride.destination}</p><span className="estimated-duration"><FiClock /> Estimated duration: {formatDuration(ride.duration)}</span></div>
-                            </div>
+                            {routePoints.map((point, index) => {
+                                const cityName = routeCities[index];
+                                const isPickup = locationsMatch(point, pickupPoint);
+                                const isDropoff = locationsMatch(point, dropoffPoint);
+                                
+                                const calculateStopTime = () => {
+                                    const baseTime = new Date(ride.travelDateTime);
+                                    if (index === 0) return baseTime;
+                                    
+                                    const totalDuration = ride.duration || 0;
+                                    const segmentRatio = index / (routePoints.length - 1);
+                                    const minutesToAdd = Math.round(totalDuration * segmentRatio);
+                                    
+                                    return new Date(baseTime.getTime() + (minutesToAdd * 60000));
+                                };
+                                
+                                const stopTime = calculateStopTime();
+                                const formattedTime = stopTime.toLocaleTimeString('en-US', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    hour12: false 
+                                });
+                                
+                                return (
+                                    <div key={index} className="timeline-item">
+                                        <div className={`timeline-icon ${index === 0 ? 'origin' : index === routePoints.length - 1 ? 'destination' : 'stop'}`}>
+                                            {index === 0 ? <FiMapPin/> : index === routePoints.length - 1 ? <FiNavigation/> : <div className="stop-circle"></div>}
+                                        </div>
+                                        <div className="timeline-content">
+                                            <div className="timeline-location-header">
+                                                <h4>{cityName}</h4>
+                                                <span className="timeline-time">{formattedTime}</span>
+                                            </div>
+                                            <p className="address">{point}</p>
+                                            {isPickup && (
+                                                <span style={{
+                                                    display: 'inline-block',
+                                                    marginTop: '8px',
+                                                    padding: '4px 12px',
+                                                    background: 'rgba(16, 185, 129, 0.1)',
+                                                    color: '#10b981',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    Your Pickup
+                                                </span>
+                                            )}
+                                            {isDropoff && (
+                                                <span style={{
+                                                    display: 'inline-block',
+                                                    marginTop: '8px',
+                                                    padding: '4px 12px',
+                                                    background: 'rgba(239, 68, 68, 0.1)',
+                                                    color: '#ef4444',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    Your Dropoff
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
+
                         <div className="info-grid">
-                            <div className="info-block"><span><FaCar />Vehicle</span><p>{ride.vehicleModel || 'N/A'}</p></div>
                             <div className="info-block"><span><FiUsers />Seats</span><p>{ride.participants.length} / {ride.vehicleCapacity || 'N/A'}</p></div>
                             <div className="info-block"><span><FiShield />Preference</span><p>{ride.genderPreference === 'FEMALE_ONLY' ? 'Female only' : 'All'}</p></div>
-                            <div className="info-block"><span><FiMapPin />Distance</span><p>{ride.distance ? `${ride.distance.toFixed(1)} km` : 'N/A'}</p></div>
                         </div>
-                        {ride.driverNote && <div className="driver-note-section"><h4><FiMessageSquare /> Driver's Note</h4><p>{ride.driverNote}</p></div>}
+
+                        {ride.driverNote && (
+                            <div className="driver-note-section">
+                                <h4><FiMessageSquare /> Driver's Note</h4>
+                                <p>{ride.driverNote}</p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="detail-card">
                         <h3><FiUsers /> Passengers ({allParticipants.length})</h3>
                         <div className="participants-grid">
-                            {allParticipants.map(p => (
-                                <div key={p.id} className={`participant-item ${p.id === driver.id ? 'driver-item' : ''}`} onClick={() => setSelectedProfileId(p.id)}>
-                                    <div className="participant-avatar-wrapper">{p.profilePictureUrl ? <img src={p.profilePictureUrl} alt={p.name} /> : <FaUserCircle/>}</div>
-                                    <div className="participant-info"><span className="name">{p.name}</span>{p.id === driver.id && <span className="badge"><FiUser /> Driver</span>}</div>
-                                </div>
-                            ))}
+                            {allParticipants.map(p => {
+                                const participantData = ride.participants.find(part => part.participant.id === p.id);
+                                const isCurrentUser = currentUser && p.id === currentUser.id;
+                                
+                                return (
+                                    <div key={p.id} className={`participant-item ${p.id === driver.id ? 'driver-item' : ''}`} onClick={() => setSelectedProfileId(p.id)}>
+                                        <div className="participant-avatar-wrapper">
+                                            {p.profilePictureUrl ? <img src={p.profilePictureUrl} alt={p.name} /> : <FaUserCircle/>}
+                                        </div>
+                                        <div className="participant-info">
+                                            <span className="name">{isCurrentUser ? 'You' : p.name}</span>
+                                            {p.id === driver.id ? (
+                                                <span className="badge"><FiUser /> Driver</span>
+                                            ) : participantData && (
+                                                <span className="badge" style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>
+                                                    {getCityFromPoint(participantData.pickupPoint)} → {getCityFromPoint(participantData.dropoffPoint)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -212,24 +491,30 @@ function RideDetailPage() {
                     <div className="price-card detail-card">
                         <h3>Pricing</h3>
                         <div className="price-display">
-                            <span className="price-label">Price per seat</span>
-                            <span className="price-value">₹{ride.price.toFixed(0)}</span>
+                            <span className="price-label">{isUserDriver ? 'Total Fare' : 'Your Fare'}</span>
+                            <span className="price-value">₹{segmentPrice != null ? segmentPrice.toFixed(0) : '...'}</span>
+                            <span className="segment-info">
+                                {getCityFromPoint(pickupPoint)} → {getCityFromPoint(dropoffPoint)}
+                            </span>
                         </div>
-                        <div className="action-button-container">{renderActionButton()}</div>
+                        {!isUserDriver && (
+                            <div className="action-button-container">
+                                {renderActionButton()}
+                            </div>
+                        )}
                     </div>
-                    
-                    {isUserInvolved && (
+
+                    {(isUserInvolved || isUserDriver) && (
                         <div className="detail-card chat-card">
-                            <h3><FiMessageSquare /> Ride Chat</h3>
-                            <button className="open-chat-btn" onClick={() => { setShowChatModal(true); setUnreadCount(0); }}>
+                            <h3><FiMessageSquare/> Ride Chat</h3>
+                            <Button onClick={() => setIsChatOpen(true)} className="open-chat-btn" style={{width: '100%'}}>
                                 <FiMessageSquare /> Open Chat
-                                {unreadCount > 0 && <span className="chat-notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
-                            </button>
+                            </Button>
                         </div>
                     )}
 
-                    {driver && (
-                         <div className="detail-card">
+                    {driver && !isUserDriver && (
+                        <div className="detail-card">
                             <h3><FaWhatsapp /> Contact Driver</h3>
                             <Button onClick={handleContactDriver} className="phone-btn" style={{width: '100%'}}>
                                 <FaWhatsapp /> Contact {driver.name}
@@ -239,21 +524,31 @@ function RideDetailPage() {
                 </div>
             </div>
 
-            {isUserInvolved && showChatModal && (
-                <div className="chat-modal-overlay" onClick={() => setShowChatModal(false)}>
-                    <div className="chat-modal-container" onClick={(e) => e.stopPropagation()}>
-                        <div className="chat-modal-header">
-                            <div className="chat-modal-title"><div className="ride-info-compact"><h3>{ride.origin} <FiArrowRight className="arrow-icon" /> {ride.destination}</h3></div></div>
-                            <button className="chat-modal-close" onClick={() => setShowChatModal(false)}><FiX /></button>
-                        </div>
-                        <div className="chat-modal-body">
-                            <ChatBox rideId={ride.id} currentUser={currentUser} participants={allParticipants} messages={messages} stompClient={stompClient} isConnected={isConnected} />
-                        </div>
-                    </div>
-                </div>
-            )}
-            
             {selectedProfileId && <PublicProfileModal userId={selectedProfileId} onClose={() => setSelectedProfileId(null)} />}
+            
+            {isChatOpen && (
+                <ChatModal
+                    ride={ride}
+                    currentUser={currentUser}
+                    participants={allParticipants}
+                    onClose={() => setIsChatOpen(false)}
+                />
+            )}
+
+            {showBookingModal && (
+                <BookingConfirmationModal
+                    ride={ride}
+                    pickupPoint={pickupPoint}
+                    dropoffPoint={dropoffPoint}
+                    pickupCity={getCityFromPoint(pickupPoint)}
+                    dropoffCity={getCityFromPoint(dropoffPoint)}
+                    segmentPrice={segmentPrice}
+                    driver={driver}
+                    onConfirm={handleBookOrJoin}
+                    onClose={() => setShowBookingModal(false)}
+                    isLoading={isActionLoading}
+                />
+            )}
         </div>
     );
 }

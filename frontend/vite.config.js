@@ -6,4 +6,8 @@ export default defineConfig({
   define: {
     global: 'window',
   },
+  server: {
+    port: 5173,       // Fixed port
+    strictPort: true, // If 5173 is busy, Vite will throw an error instead of picking another port
+  },
 });

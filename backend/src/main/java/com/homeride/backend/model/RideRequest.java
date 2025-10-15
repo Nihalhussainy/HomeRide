@@ -23,19 +23,31 @@ public class RideRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "origin_city", nullable = false)
+    private String originCity;
+
     @Column(nullable = false)
     private String origin;
+
+    @Column(name = "destination_city", nullable = false)
+    private String destinationCity;
 
     @Column(nullable = false)
     private String destination;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "ride_stops", joinColumns = @JoinColumn(name = "ride_request_id"))
-    @Column(name = "stop")
-    private List<String> stops = new ArrayList<>();
+    // REMOVED: Old @ElementCollection for stops
+    // @ElementCollection(fetch = FetchType.EAGER)
+    // @CollectionTable(name = "ride_stops", joinColumns = @JoinColumn(name = "ride_request_id"))
+    // @Column(name = "stop")
+    // private List<String> stops = new ArrayList<>();
+
+    // NEW: Relationship to the Stopover entity
+    @OneToMany(mappedBy = "rideRequest", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonManagedReference
+    private List<Stopover> stopovers = new ArrayList<>();
 
     @Column(nullable = false)
-    private String rideType; // Will always be 'OFFERED'
+    private String rideType;
 
     @Column(nullable = false)
     private LocalDateTime travelDateTime;
@@ -48,18 +60,29 @@ public class RideRequest {
     private Integer duration; // Duration in minutes
     private Double distance; // Distance in kilometers
 
-    @Column(length = 1000) // NEW: Add this field with reasonable length
-    private String driverNote; // Optional note from the driver
+    @Column(length = 1000)
+    private String driverNote;
+
+    @Column(columnDefinition = "TEXT")
+    private String routePolyline;
+
+    @Column
+    private Double pricePerKm;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "ride_stopover_prices", joinColumns = @JoinColumn(name = "ride_request_id"))
+    @Column(name = "price")
+    private List<Double> stopoverPrices = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requester_id", nullable = false)
-    private Employee requester; // This is the driver in an 'OFFERED' ride
+    private Employee requester;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")
     private Employee driver;
 
-    @OneToMany(mappedBy = "rideRequest", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "rideRequest", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

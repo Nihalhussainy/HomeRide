@@ -1,8 +1,10 @@
 package com.homeride.backend.controller;
 
 import com.homeride.backend.dto.RideRequestDTO;
+import com.homeride.backend.dto.TravelInfo;
 import com.homeride.backend.model.RideParticipant;
 import com.homeride.backend.model.RideRequest;
+import com.homeride.backend.service.GoogleMapsService;
 import com.homeride.backend.service.RideRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,25 +12,33 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rides")
 public class RideRequestController {
+
     private final RideRequestService rideRequestService;
+    private final GoogleMapsService googleMapsService;
 
     @Autowired
-    public RideRequestController(RideRequestService rideRequestService) {
+    public RideRequestController(
+            RideRequestService rideRequestService,
+            GoogleMapsService googleMapsService) {
         this.rideRequestService = rideRequestService;
+        this.googleMapsService = googleMapsService;
     }
 
-    @PostMapping("/request")
-    public ResponseEntity<RideRequest> createRide(@RequestBody RideRequestDTO rideRequestDTO, Principal principal) {
-        String requesterEmail = principal.getName();
-        RideRequest newRideRequest = rideRequestService.createRideOffer(rideRequestDTO, requesterEmail);
-        return ResponseEntity.ok(newRideRequest);
+    @GetMapping("/travel-info")
+    public ResponseEntity<TravelInfo> getTravelInfo(
+            @RequestParam String origin,
+            @RequestParam String destination,
+            @RequestParam(required = false) String[] stops) {
+        TravelInfo travelInfo = googleMapsService.getTravelInfo(origin, destination, stops);
+        return ResponseEntity.ok(travelInfo);
     }
 
-    @PostMapping("/offer")
+    @PostMapping("/offer") // This endpoint must exist
     public ResponseEntity<RideRequest> createRideOffer(@RequestBody RideRequestDTO rideRequestDTO, Principal principal) {
         String requesterEmail = principal.getName();
         RideRequest newRideRequest = rideRequestService.createRideOffer(rideRequestDTO, requesterEmail);
@@ -58,9 +68,12 @@ public class RideRequestController {
     }
 
     @PostMapping("/{rideId}/join")
-    public ResponseEntity<RideParticipant> joinRide(@PathVariable Long rideId, Principal principal) {
+    public ResponseEntity<RideParticipant> joinRide(
+            @PathVariable Long rideId,
+            @RequestBody Map<String, Object> segmentDetails,
+            Principal principal) {
         String participantEmail = principal.getName();
-        RideParticipant rideParticipant = rideRequestService.joinRideRequest(rideId, participantEmail);
+        RideParticipant rideParticipant = rideRequestService.joinRideRequest(rideId, participantEmail, segmentDetails);
         return ResponseEntity.ok(rideParticipant);
     }
 

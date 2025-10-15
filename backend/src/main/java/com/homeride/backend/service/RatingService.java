@@ -3,7 +3,7 @@ package com.homeride.backend.service;
 import com.homeride.backend.dto.RatingDTO;
 import com.homeride.backend.model.Employee;
 import com.homeride.backend.model.Rating;
-import com.homeride.backend.model.RideRequest;
+import com.homeride.backend.model.RideRequest; // Correctly imported
 import com.homeride.backend.repository.EmployeeRepository;
 import com.homeride.backend.repository.RatingRepository;
 import com.homeride.backend.repository.RideRequestRepository;
@@ -48,7 +48,9 @@ public class RatingService {
 
         return ratingRepository.save(newRating);
     }
-
+    public void deleteAllRatingsForRide(RideRequest rideRequest) {
+        ratingRepository.deleteAllByRideRequest(rideRequest);
+    }
     public List<Rating> getRatingsForUser(String userEmail) {
         Employee employee = employeeRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -61,7 +63,6 @@ public class RatingService {
         return ratingRepository.findByRater(rater);
     }
 
-    // NEW: Calculate average rating for a user
     public Double calculateAverageRating(Long employeeId) {
         List<Rating> ratings = ratingRepository.findByRateeId(employeeId);
 
