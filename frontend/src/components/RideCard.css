@@ -48,6 +48,15 @@
   transform: translateY(-2px);
 }
 
+.ride-card-final.completed {
+  opacity: 0.5;
+  background: linear-gradient(135deg, var(--surface-color) 0%, rgba(16, 185, 129, 0.03) 100%);
+}
+
+.ride-card-final.completed:hover {
+  transform: translateY(-2px);
+}
+
 /* Top Section - Timeline */
 .card-top-section {
   display: flex;
@@ -259,6 +268,12 @@
 .status-tag.departed {
   color: #f59e0b;
   animation: pulse 2s ease-in-out infinite;
+}
+
+.status-tag.completed {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.15);
+  animation: none;
 }
 
 @keyframes pulse {

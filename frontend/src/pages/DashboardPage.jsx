@@ -11,6 +11,33 @@ function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Helper function to calculate ride completion time (departure + duration)
+  const getRideCompletionTime = (ride) => {
+    try {
+      const departureTime = new Date(ride.travelDateTime).getTime();
+      const durationMs = (ride.duration || 0) * 60000;
+      return new Date(departureTime + durationMs);
+    } catch (error) {
+      return new Date();
+    }
+  };
+
+  // Helper function to check if ride should still be visible
+  const shouldShowRide = (ride) => {
+    const now = new Date();
+    const departureTime = new Date(ride.travelDateTime);
+    const completionTime = getRideCompletionTime(ride);
+    
+    // Show all rides before departure
+    if (now < departureTime) return true;
+    
+    // After completion, show for 24 hours
+    const twentyFourHoursAfterCompletion = new Date(completionTime.getTime() + 24 * 60 * 60 * 1000);
+    
+    // Show if before 24 hours after completion
+    return now < twentyFourHoursAfterCompletion;
+  };
+
   const fetchData = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -29,10 +56,11 @@ function DashboardPage() {
       
       setCurrentUser(userResponse.data);
 
-      const futureRides = myRidesResponse.data.filter(ride => new Date(ride.travelDateTime) > new Date());
-      futureRides.sort((a, b) => new Date(a.travelDateTime) - new Date(b.travelDateTime));
+      // Include rides that are upcoming or should still be shown
+      const visibleRides = myRidesResponse.data.filter(ride => shouldShowRide(ride));
+      visibleRides.sort((a, b) => new Date(b.travelDateTime) - new Date(a.travelDateTime));
 
-      setUpcomingRides(futureRides);
+      setUpcomingRides(visibleRides);
 
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);

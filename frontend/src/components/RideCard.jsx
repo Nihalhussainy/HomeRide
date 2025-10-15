@@ -5,7 +5,7 @@ import './RideCard.css';
 import axios from 'axios';
 import { useNotification } from '../context/NotificationContext.jsx';
 import { FiTrash2, FiCalendar, FiMapPin } from 'react-icons/fi';
-import { FaUserCircle } from 'react-icons/fa';
+import { FaUserCircle, FaCheckCircle } from 'react-icons/fa';
 
 function RideCard({ ride, currentUser, onActionSuccess }) {
     const navigate = useNavigate();
@@ -13,7 +13,20 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
 
     const driver = ride.requester;
     const isMyRide = currentUser?.id === driver?.id;
-    const hasDeparted = new Date(ride.travelDateTime) < new Date();
+    const now = new Date();
+    const departureTime = new Date(ride.travelDateTime);
+    const completionTime = useMemo(() => {
+        try {
+            const departTime = new Date(ride.travelDateTime).getTime();
+            const durationMs = (ride.duration || 0) * 60000;
+            return new Date(departTime + durationMs);
+        } catch (error) {
+            return new Date();
+        }
+    }, [ride]);
+
+    const hasDeparted = now > departureTime;
+    const hasCompleted = now > completionTime;
     const mySegment = ride.participants?.find(p => p.participant.id === currentUser?.id);
 
     // Create arrays of route points and cities
@@ -45,8 +58,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
     const displayDestination = mySegment?.dropoffPoint 
         ? getCityFromPoint(mySegment.dropoffPoint) 
         : ride.destinationCity;
-    
-    // Don't show intermediate stops in the card - only show pickup and dropoff
 
     const handleCardClick = (e) => {
         if (e.target.closest('.card-action')) return;
@@ -87,9 +98,9 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
 
     const calculateArrivalTime = () => {
         try {
-            const departureTime = new Date(ride.travelDateTime).getTime();
+            const departTime = new Date(ride.travelDateTime).getTime();
             const durationMs = (ride.duration || 0) * 60000;
-            return new Date(departureTime + durationMs);
+            return new Date(departTime + durationMs);
         } catch (error) {
             return new Date();
         }
@@ -117,7 +128,7 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
 
     return (
         <div
-            className={`ride-card-final ${hasDeparted ? 'departed' : ''}`}
+            className={`ride-card-final ${hasDeparted && !hasCompleted ? 'departed' : ''} ${hasCompleted ? 'completed' : ''}`}
             onClick={handleCardClick}
             role="button"
             tabIndex={0}
@@ -186,7 +197,12 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
                 </div>
 
                 <div className="card-action" onClick={(e) => e.stopPropagation()}>
-                    {hasDeparted ? (
+                    {hasCompleted ? (
+                        <span className="status-tag completed">
+                            <FaCheckCircle size={14} />
+                            Completed
+                        </span>
+                    ) : hasDeparted ? (
                         <span className="status-tag departed">
                             Departed
                         </span>

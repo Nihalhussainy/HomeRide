@@ -7,7 +7,7 @@ import PublicProfileModal from '../components/PublicProfileModal.jsx';
 import ChatModal from '../components/ChatModal.jsx';
 import BookingConfirmationModal from '../components/BookingConfirmationModal.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
-import { FaUserCircle, FaWhatsapp } from 'react-icons/fa';
+import { FaUserCircle, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
 import { FiClock, FiUsers, FiMapPin, FiArrowRight, FiCheckCircle, FiShield, FiMessageSquare, FiInfo, FiNavigation, FiUser } from 'react-icons/fi';
 import './RideDetailPage.css';
 import { GoogleMap, useJsApiLoader, DirectionsRenderer, MarkerF } from '@react-google-maps/api';
@@ -59,6 +59,32 @@ function RideDetailPage() {
             searchDestination: fromUrl.searchDestination || fromState.searchDestination
         };
     }, [searchParams, location.state]);
+
+    // Helper function to calculate ride completion time
+    const getRideCompletionTime = useCallback((rideData) => {
+        try {
+            const departTime = new Date(rideData.travelDateTime).getTime();
+            const durationMs = (rideData.duration || 0) * 60000;
+            return new Date(departTime + durationMs);
+        } catch (error) {
+            return new Date();
+        }
+    }, []);
+
+    // Calculate ride status
+    const rideStatus = useMemo(() => {
+        if (!ride) return null;
+        const now = new Date();
+        const departureTime = new Date(ride.travelDateTime);
+        const completionTime = getRideCompletionTime(ride);
+
+        if (now > completionTime) {
+            return 'completed';
+        } else if (now > departureTime) {
+            return 'departed';
+        }
+        return 'upcoming';
+    }, [ride, getRideCompletionTime]);
 
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('token');
@@ -349,6 +375,15 @@ function RideDetailPage() {
         if (ride.vehicleCapacity != null && totalSeatsBooked >= ride.vehicleCapacity) {
             return <div className="status-tag full">Ride is full</div>;
         }
+
+        if (rideStatus === 'departed') {
+            return <div className="status-tag departed">Departed</div>;
+        }
+
+        if (rideStatus === 'completed') {
+            return <div className="status-tag completed"><FaCheckCircle /> Completed</div>;
+        }
+
         return (
             <Button onClick={() => setShowBookingModal(true)} disabled={!validSelection}>
                 Book Seat
@@ -368,6 +403,16 @@ function RideDetailPage() {
             <header className="page-header">
                 <h1>{getCityFromPoint(pickupPoint)} <FiArrowRight/> {getCityFromPoint(dropoffPoint)}</h1>
                 <p className="page-description">{formatDate(ride.travelDateTime)}</p>
+                {rideStatus === 'departed' && (
+                    <div style={{marginTop: '12px', display: 'inline-block'}}>
+                        <span className="status-tag departed">Departed</span>
+                    </div>
+                )}
+                {rideStatus === 'completed' && (
+                    <div style={{marginTop: '12px', display: 'inline-block'}}>
+                        <span className="status-tag completed"><FaCheckCircle /> Completed</span>
+                    </div>
+                )}
             </header>
 
             <div className="detail-grid">
@@ -476,7 +521,7 @@ function RideDetailPage() {
                     </div>
 
                     <div className="detail-card">
-<h3><FiUsers /> Passengers ({allParticipants.length})</h3>
+                        <h3><FiUsers /> Passengers ({allParticipants.length})</h3>
                         <div className="participants-grid">
                             {allParticipants.map(p => {
                                 const participantData = ride.participants.find(part => part.participant.id === p.id);
@@ -551,7 +596,12 @@ function RideDetailPage() {
                                 </span>
                             </div>
                         )}
-                        {!isUserDriver && !isUserInvolved && (
+                        {!isUserDriver && !isUserInvolved && rideStatus !== 'departed' && rideStatus !== 'completed' && (
+                            <div className="action-button-container">
+                                {renderActionButton()}
+                            </div>
+                        )}
+                        {!isUserDriver && rideStatus && (rideStatus === 'departed' || rideStatus === 'completed') && (
                             <div className="action-button-container">
                                 {renderActionButton()}
                             </div>
