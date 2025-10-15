@@ -36,11 +36,19 @@ public class RideParticipant {
     @Column
     private Double price;
 
+    // NEW FIELD: Number of seats booked by this participant
+    @Column
+    private Integer numberOfSeats;
+
     @Column(updatable = false)
     private LocalDateTime joinedAt;
 
     @PrePersist
     protected void onCreate() {
         joinedAt = LocalDateTime.now();
+        // Default to 1 seat if not specified
+        if (numberOfSeats == null) {
+            numberOfSeats = 1;
+        }
     }
 }

@@ -4,6 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useNotification } from '../context/NotificationContext.jsx';
 import { FaCarSide } from 'react-icons/fa';
 import { FiLogOut, FiUser, FiPlusCircle, FiSearch, FiGrid, FiSettings, FiUserCheck } from 'react-icons/fi';
+import Notifications from './Notifications'; // Import the new component
 import './Navbar.css';
 
 function Navbar() {
@@ -73,36 +74,39 @@ function Navbar() {
 
             <div className="navbar-user-section">
                 {token ? (
-                    <div className="user-menu-container" ref={dropdownRef}>
-                        <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="user-menu-button">
-                            {userProfilePic ? (
-                                <img src={userProfilePic} alt="My Profile" className="user-avatar" />
-                            ) : (
-                                <FiUserCheck size={36} className="user-avatar" />
-                            )}
-                        </button>
-                        {isDropdownOpen && (
-                            <div className="dropdown-menu">
-                                <div className="dropdown-header">
-                                    Signed in as <br/> <strong>{userName}</strong>
-                                </div>
-                                <NavLink to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                                    <FiUser /> My Profile
-                                </NavLink>
-                                <NavLink to="/offer-ride" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                                    <FiPlusCircle/> Offer a Ride
-                                </NavLink>
-                                {userRole === 'ADMIN' && (
-                                    <NavLink to="/admin"  className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                                        <FiSettings /> Admin Panel
-                                    </NavLink>
+                    <>
+                        <Notifications />
+                        <div className="user-menu-container" ref={dropdownRef}>
+                            <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="user-menu-button">
+                                {userProfilePic ? (
+                                    <img src={userProfilePic} alt="My Profile" className="user-avatar" />
+                                ) : (
+                                    <FiUserCheck size={36} className="user-avatar" />
                                 )}
-                                <button onClick={handleLogout} className="dropdown-item logout">
-                                    <FiLogOut /> Logout
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                            </button>
+                            {isDropdownOpen && (
+                                <div className="dropdown-menu">
+                                    <div className="dropdown-header">
+                                        Signed in as <br/> <strong>{userName}</strong>
+                                    </div>
+                                    <NavLink to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                                        <FiUser /> My Profile
+                                    </NavLink>
+                                    <NavLink to="/offer-ride" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                                        <FiPlusCircle/> Offer a Ride
+                                    </NavLink>
+                                    {userRole === 'ADMIN' && (
+                                        <NavLink to="/admin"  className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                                            <FiSettings /> Admin Panel
+                                        </NavLink>
+                                    )}
+                                    <button onClick={handleLogout} className="dropdown-item logout">
+                                        <FiLogOut /> Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 ) : (
                     <div className="auth-links">
                         <Link to="/login">Login</Link>

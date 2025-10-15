@@ -245,3 +245,8 @@
         display: none;
     }
 }
+.navbar-user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Add some space between the notification bell and user menu */
+}

@@ -1,7 +1,7 @@
 // src/components/BookingConfirmationModal.jsx
 import React, { useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
-import { FiX, FiMapPin, FiNavigation } from 'react-icons/fi';
+import { FiX, FiMapPin, FiNavigation, FiPlus, FiMinus, FiUsers } from 'react-icons/fi';
 import './BookingConfirmationModal.css';
 
 const BookingConfirmationModal = ({ 
@@ -17,6 +17,30 @@ const BookingConfirmationModal = ({
   isLoading 
 }) => {
   const [message, setMessage] = useState('');
+  const [passengerCount, setPassengerCount] = useState(1);
+  
+  // Calculate total seats booked by summing all participants' seats
+  const totalSeatsBooked = ride.participants.reduce((total, p) => {
+    return total + (p.numberOfSeats || 1);
+  }, 0);
+  
+  // Calculate available seats correctly
+  const availableSeats = ride.vehicleCapacity - totalSeatsBooked;
+  const maxSeats = Math.min(availableSeats, ride.vehicleCapacity);
+  
+  const handleIncrement = () => {
+    if (passengerCount < maxSeats) {
+      setPassengerCount(prev => prev + 1);
+    }
+  };
+  
+  const handleDecrement = () => {
+    if (passengerCount > 1) {
+      setPassengerCount(prev => prev - 1);
+    }
+  };
+  
+  const totalPrice = segmentPrice * passengerCount;
 
   const formatTime = (dateTime) => {
     return new Date(dateTime).toLocaleTimeString('en-US', { 
@@ -43,10 +67,15 @@ const BookingConfirmationModal = ({
   const handleWhatsAppContact = () => {
     if (driver && driver.phoneNumber) {
       const phoneNumber = driver.phoneNumber.replace(/\D/g, '');
-      const defaultMessage = message || `Hello, I've just booked your ride from ${pickupCity} to ${dropoffCity}. Looking forward to traveling with you!`;
+      const seatText = passengerCount > 1 ? `${passengerCount} seats` : '1 seat';
+      const defaultMessage = message || `Hello, I've just booked ${seatText} for your ride from ${pickupCity} to ${dropoffCity}. Looking forward to traveling with you!`;
       const whatsappUrl = `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     }
+  };
+
+  const handleConfirm = () => {
+    onConfirm(passengerCount);
   };
 
   return (
@@ -85,12 +114,51 @@ const BookingConfirmationModal = ({
             </div>
           </div>
 
+          {/* Passenger Counter */}
+          <div className="booking-section">
+            <h3 className="section-title">Number of Seats</h3>
+            <div className="passenger-counter-wrapper">
+              <div className="seats-info">
+                <FiUsers />
+                <span>{availableSeats} seat{availableSeats !== 1 ? 's' : ''} available</span>
+              </div>
+              <div className="passenger-counter">
+                <button 
+                  className="counter-btn" 
+                  onClick={handleDecrement}
+                  disabled={passengerCount <= 1}
+                  aria-label="Decrease passengers"
+                  type="button"
+                >
+                  <FiMinus />
+                </button>
+                <span className="counter-value">{passengerCount}</span>
+                <button 
+                  className="counter-btn" 
+                  onClick={handleIncrement}
+                  disabled={passengerCount >= maxSeats}
+                  aria-label="Increase passengers"
+                  type="button"
+                >
+                  <FiPlus />
+                </button>
+              </div>
+            </div>
+            {passengerCount >= maxSeats && maxSeats < ride.vehicleCapacity && (
+              <p className="seats-warning">
+                Only {maxSeats} seat{maxSeats !== 1 ? 's' : ''} left in this ride
+              </p>
+            )}
+          </div>
+
           {/* Price Summary */}
           <div className="booking-section">
             <h3 className="section-title">Price summary</h3>
             <div className="price-summary">
               <div className="price-row">
-                <span className="price-label">1 seat: ₹{segmentPrice?.toFixed(2)}</span>
+                <span className="price-label">
+                  {passengerCount} seat{passengerCount > 1 ? 's' : ''}: ₹{totalPrice?.toFixed(2)}
+                </span>
                 <span className="payment-method">Cash</span>
               </div>
               <p className="payment-note">Pay in the car</p>
@@ -122,7 +190,7 @@ const BookingConfirmationModal = ({
           {/* Book Button */}
           <button 
             className="book-btn"
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={isLoading}
           >
             {isLoading ? 'Booking...' : '⚡ Book'}

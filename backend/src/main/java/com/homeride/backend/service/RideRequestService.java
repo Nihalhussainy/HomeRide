@@ -36,18 +36,21 @@ public class RideRequestService {
     private final RideParticipantRepository rideParticipantRepository;
     private final GoogleMapsService googleMapsService;
     private final RatingService ratingService;
+    private final NotificationService notificationService;
 
     @Autowired
     public RideRequestService(RideRequestRepository rideRequestRepository,
                               EmployeeRepository employeeRepository,
                               RideParticipantRepository rideParticipantRepository,
                               GoogleMapsService googleMapsService,
-                              RatingService ratingService) {
+                              RatingService ratingService,
+                              NotificationService notificationService) {
         this.rideRequestRepository = rideRequestRepository;
         this.employeeRepository = employeeRepository;
         this.rideParticipantRepository = rideParticipantRepository;
         this.googleMapsService = googleMapsService;
         this.ratingService = ratingService;
+        this.notificationService = notificationService;
     }
 
     public RideRequest getRideById(Long rideId) {
@@ -370,7 +373,13 @@ public class RideRequestService {
             newRideOffer.setPricePerKm(0.0);
         }
 
-        return rideRequestRepository.save(newRideOffer);
+        RideRequest savedRide = rideRequestRepository.save(newRideOffer);
+
+        // Create notification
+        String message = "You offered a ride from " + savedRide.getOriginCity() + " to " + savedRide.getDestinationCity();
+        notificationService.createNotification(requester, message, "/ride/" + savedRide.getId(), "RIDE_OFFERED", savedRide.getId());
+
+        return savedRide;
     }
 
     @Transactional
@@ -384,6 +393,13 @@ public class RideRequestService {
         if (!Objects.equals(ride.getRequester().getId(), user.getId())) {
             throw new IllegalStateException("You are not authorized to delete this ride.");
         }
+
+        // Notify all participants that the ride has been canceled
+        ride.getParticipants().forEach(participant -> {
+            String message = "Your ride from " + ride.getOriginCity() + " to " + ride.getDestinationCity() + " has been canceled.";
+            notificationService.createNotification(participant.getParticipant(), message, "/dashboard", "RIDE_CANCELED", ride.getId());
+        });
+
 
         logger.info("Authorization successful. Deleting ride ID: {}", rideId);
         rideRequestRepository.delete(ride);
@@ -401,13 +417,18 @@ public class RideRequestService {
         String dropoffPoint = (String) segmentDetails.get("dropoffPoint");
         Double price = ((Number) segmentDetails.get("price")).doubleValue();
 
+        // EXTRACT numberOfSeats from segmentDetails
+        Integer numberOfSeats = 1; // Default to 1
+        if (segmentDetails.containsKey("numberOfSeats")) {
+            numberOfSeats = ((Number) segmentDetails.get("numberOfSeats")).intValue();
+        }
+
         if (pickupPoint == null || dropoffPoint == null || price == null) {
             throw new IllegalStateException("Pickup point, drop-off point, and price must be provided.");
         }
 
         List<String> fullRoute = new ArrayList<>();
         fullRoute.add(rideRequest.getOrigin());
-        // FIX: Use getStopovers() and extract the point from each Stopover object
         if (rideRequest.getStopovers() != null) {
             fullRoute.addAll(rideRequest.getStopovers().stream().map(Stopover::getPoint).collect(Collectors.toList()));
         }
@@ -433,8 +454,15 @@ public class RideRequestService {
             throw new IllegalStateException("This ride is for female participants only.");
         }
 
-        if (rideRequest.getVehicleCapacity() - rideRequest.getParticipants().size() < 1) {
-            throw new IllegalStateException("This ride is already full.");
+        // UPDATED: Calculate total seats booked to check capacity
+        int totalSeatsBooked = rideRequest.getParticipants().stream()
+                .mapToInt(p -> p.getNumberOfSeats() != null ? p.getNumberOfSeats() : 1)
+                .sum();
+
+        // Check if there's enough capacity for the requested seats
+        if (rideRequest.getVehicleCapacity() - totalSeatsBooked < numberOfSeats) {
+            throw new IllegalStateException("Not enough seats available. Only " +
+                    (rideRequest.getVehicleCapacity() - totalSeatsBooked) + " seat(s) left.");
         }
 
         if (rideRequest.getRequester().equals(participant)) {
@@ -451,8 +479,22 @@ public class RideRequestService {
         rideParticipant.setPickupPoint(pickupPoint);
         rideParticipant.setDropoffPoint(dropoffPoint);
         rideParticipant.setPrice(price);
+        rideParticipant.setNumberOfSeats(numberOfSeats); // SET THE NUMBER OF SEATS
 
-        return rideParticipantRepository.save(rideParticipant);
+        RideParticipant savedParticipant = rideParticipantRepository.save(rideParticipant);
+
+        // Notify the ride creator
+        String seatText = numberOfSeats > 1 ? numberOfSeats + " seats" : "1 seat";
+        String message = participant.getName() + " has booked " + seatText + " for your ride from " +
+                rideRequest.getOriginCity() + " to " + rideRequest.getDestinationCity();
+        notificationService.createNotification(rideRequest.getRequester(), message, "/ride/" + rideId, "RIDE_JOINED", rideId);
+
+        // Notify the participant
+        String participantMessage = "You have booked " + seatText + " for a ride from " +
+                rideRequest.getOriginCity() + " to " + rideRequest.getDestinationCity();
+        notificationService.createNotification(participant, participantMessage, "/ride/" + rideId, "RIDE_JOINED", rideId);
+
+        return savedParticipant;
     }
 
     public List<RideRequest> getRidesForUser(String userEmail) {

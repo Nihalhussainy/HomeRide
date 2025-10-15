@@ -265,7 +265,7 @@ function RideDetailPage() {
         }
     };
 
-    const handleBookOrJoin = async () => {
+    const handleBookOrJoin = async (passengerCount) => {
         let pickupIndex = -1;
         let dropoffIndex = -1;
 
@@ -290,12 +290,14 @@ function RideDetailPage() {
             const body = {
                 pickupPoint: routePoints[pickupIndex],
                 dropoffPoint: routePoints[dropoffIndex],
-                price: segmentPrice
+                price: segmentPrice * passengerCount,
+                numberOfSeats: passengerCount
             };
             await axios.post(`http://localhost:8080/api/rides/${id}/join`, body, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            showNotification('Successfully booked your segment!', 'success');
+            const seatText = passengerCount > 1 ? `${passengerCount} seats` : 'your seat';
+            showNotification(`Successfully booked ${seatText}!`, 'success');
             setShowBookingModal(false);
             await fetchData();
         } catch (error) {
@@ -305,6 +307,21 @@ function RideDetailPage() {
             setIsActionLoading(false);
         }
     };
+
+    // Calculate total seats booked by counting all participants' seats
+    const totalSeatsBooked = useMemo(() => {
+        if (!ride) return 0;
+        return ride.participants.reduce((total, p) => {
+            return total + (p.numberOfSeats || 1);
+        }, 0);
+    }, [ride]);
+
+    // Get current user's booking details
+    const userBookingDetails = useMemo(() => {
+        if (!currentUser || !ride) return null;
+        const userParticipant = ride.participants.find(p => p.participant.id === currentUser.id);
+        return userParticipant || null;
+    }, [currentUser, ride]);
 
     const renderActionButton = () => {
         if (isUserDriver) {
@@ -329,7 +346,7 @@ function RideDetailPage() {
         
         const validSelection = pickupIndex !== -1 && dropoffIndex !== -1 && pickupIndex < dropoffIndex;
         
-        if (ride.vehicleCapacity != null && ride.participants.length >= ride.vehicleCapacity) {
+        if (ride.vehicleCapacity != null && totalSeatsBooked >= ride.vehicleCapacity) {
             return <div className="status-tag full">Ride is full</div>;
         }
         return (
@@ -446,8 +463,8 @@ function RideDetailPage() {
                         </div>
 
                         <div className="info-grid">
-                            <div className="info-block"><span><FiUsers />Seats</span><p>{ride.participants.length} / {ride.vehicleCapacity || 'N/A'}</p></div>
-                            <div className="info-block"><span><FiShield />Preference</span><p>{ride.genderPreference === 'FEMALE_ONLY' ? 'Female only' : 'All'}</p></div>
+                            <div className="info-block"><span><FiUsers />Seats</span><p>{totalSeatsBooked} / {ride.vehicleCapacity || 'N/A'}</p></div>
+                            <div className="info-block"><span><FiShield />Gender Preference</span><p>{ride.genderPreference === 'FEMALE_ONLY' ? 'Female only' : 'Both'}</p></div>
                         </div>
 
                         {ride.driverNote && (
@@ -459,11 +476,12 @@ function RideDetailPage() {
                     </div>
 
                     <div className="detail-card">
-                        <h3><FiUsers /> Passengers ({allParticipants.length})</h3>
+<h3><FiUsers /> Passengers ({allParticipants.length})</h3>
                         <div className="participants-grid">
                             {allParticipants.map(p => {
                                 const participantData = ride.participants.find(part => part.participant.id === p.id);
                                 const isCurrentUser = currentUser && p.id === currentUser.id;
+                                const numberOfSeats = participantData?.numberOfSeats || (p.id === driver.id ? 0 : 1);
                                 
                                 return (
                                     <div key={p.id} className={`participant-item ${p.id === driver.id ? 'driver-item' : ''}`} onClick={() => setSelectedProfileId(p.id)}>
@@ -471,7 +489,19 @@ function RideDetailPage() {
                                             {p.profilePictureUrl ? <img src={p.profilePictureUrl} alt={p.name} /> : <FaUserCircle/>}
                                         </div>
                                         <div className="participant-info">
-                                            <span className="name">{isCurrentUser ? 'You' : p.name}</span>
+                                            <span className="name">
+                                                {isCurrentUser ? 'You' : p.name}
+                                                {p.id !== driver.id && numberOfSeats > 1 && (
+                                                    <span style={{
+                                                        marginLeft: '8px',
+                                                        fontSize: '0.85rem',
+                                                        color: 'var(--text-secondary)',
+                                                        fontWeight: '500'
+                                                    }}>
+                                                        ({numberOfSeats} seats)
+                                                    </span>
+                                                )}
+                                            </span>
                                             {p.id === driver.id ? (
                                                 <span className="badge"><FiUser /> Driver</span>
                                             ) : participantData && (
@@ -490,14 +520,38 @@ function RideDetailPage() {
                 <div className="detail-sidebar">
                     <div className="price-card detail-card">
                         <h3>Pricing</h3>
-                        <div className="price-display">
-                            <span className="price-label">{isUserDriver ? 'Total Fare' : 'Your Fare'}</span>
-                            <span className="price-value">₹{segmentPrice != null ? segmentPrice.toFixed(0) : '...'}</span>
-                            <span className="segment-info">
-                                {getCityFromPoint(pickupPoint)} → {getCityFromPoint(dropoffPoint)}
-                            </span>
-                        </div>
-                        {!isUserDriver && (
+                        {isUserInvolved && userBookingDetails ? (
+                            <div className="booking-details-display">
+                                <div className="booking-status-badge">
+                                    <FiCheckCircle /> Booking Confirmed
+                                </div>
+                                <div className="price-display">
+                                    <span className="price-label">Your Booking</span>
+                                    <div className="booking-info-grid">
+                                        <div className="booking-info-item">
+                                            <span className="info-label">Seats Booked</span>
+                                            <span className="info-value">{userBookingDetails.numberOfSeats || 1}</span>
+                                        </div>
+                                        <div className="booking-info-item">
+                                            <span className="info-label">Total</span>
+                                            <span className="info-value">₹{userBookingDetails.price?.toFixed(0) || '0'}</span>
+                                        </div>
+                                    </div>
+                                    <span className="segment-info">
+                                        {getCityFromPoint(userBookingDetails.pickupPoint)} → {getCityFromPoint(userBookingDetails.dropoffPoint)}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="price-display">
+                                <span className="price-label">{isUserDriver ? 'Total Fare' : 'Your Fare'}</span>
+                                <span className="price-value">₹{segmentPrice != null ? segmentPrice.toFixed(0) : '...'}</span>
+                                <span className="segment-info">
+                                    {getCityFromPoint(pickupPoint)} → {getCityFromPoint(dropoffPoint)}
+                                </span>
+                            </div>
+                        )}
+                        {!isUserDriver && !isUserInvolved && (
                             <div className="action-button-container">
                                 {renderActionButton()}
                             </div>

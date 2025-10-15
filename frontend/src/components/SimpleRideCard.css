@@ -79,7 +79,7 @@
   color: var(--text-primary);
 }
 
-/* --- Column 3: Price (MODIFIED) --- */
+/* --- Column 3: Price --- */
 .price-container {
   grid-area: 1 / 3 / 4 / 4;
   background-color: var(--surface-color-light);
@@ -87,19 +87,15 @@
   border-radius: 12px;
   text-align: center;
   align-self: center;
-  /* Add flex properties for perfect centering */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .price-value {
-  font-size: 1.75rem; /* Slightly larger for more impact */
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--primary-color);
   line-height: 1;
-}
-.price-label { /* This class is no longer used but kept for reference */
-  display: none;
 }
 
 /* --- Bottom Row --- */
@@ -114,8 +110,16 @@
   grid-area: 5 / 1 / 6 / 3;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 14px;
 }
+
+.driver-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .driver-avatar-wrapper { position: relative; }
 .driver-avatar {
   width: 44px;
@@ -129,6 +133,16 @@
 .driver-rating { display: flex; align-items: center; gap: 4px; font-size: 0.9rem; }
 .star-icon { color: #fbbf24; }
 .rating-value { color: var(--text-secondary); font-weight: 500; }
+
+.date-badge {
+  background-color: var(--surface-color-light);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
 
 .seats-container {
   grid-area: 5 / 3;

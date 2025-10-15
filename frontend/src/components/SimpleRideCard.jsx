@@ -1,4 +1,4 @@
-// src/components/SimpleRideCard.jsx - Fixed price calculation to match RideDetailPage
+// src/components/SimpleRideCard.jsx - Updated with date badge and removed segment fare text
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserCircle, FaStar } from 'react-icons/fa';
@@ -215,6 +215,27 @@ function SimpleRideCard({ ride, searchOrigin, searchDestination }) {
         return new Date(dateTimeString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     };
 
+    const formatDate = (dateTimeString) => {
+        const date = new Date(dateTimeString);
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Reset time parts for comparison
+        today.setHours(0, 0, 0, 0);
+        tomorrow.setHours(0, 0, 0, 0);
+        const compareDate = new Date(date);
+        compareDate.setHours(0, 0, 0, 0);
+        
+        if (compareDate.getTime() === today.getTime()) {
+            return 'Today';
+        } else if (compareDate.getTime() === tomorrow.getTime()) {
+            return 'Tomorrow';
+        } else {
+            return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        }
+    };
+
     const calculateArrivalTime = () => {
         const departureTime = new Date(ride.travelDateTime);
         const durationMs = (ride.duration || 0) * 60000;
@@ -275,36 +296,30 @@ function SimpleRideCard({ ride, searchOrigin, searchDestination }) {
 
                 <div className="price-container">
                     <span className="price-value">₹{segmentDetails.price ? segmentDetails.price.toFixed(0) : '0'}</span>
-                    {segmentDetails.isSegment && (
-                        <span style={{
-                            fontSize: '0.75rem',
-                            color: 'var(--text-secondary)',
-                            marginTop: '4px'
-                        }}>
-                            Segment fare
-                        </span>
-                    )}
                 </div>
 
                 <div className="card-divider"></div>
 
                 <div className="driver-container">
-                    <div className="driver-avatar-wrapper">
-                        {driver.profilePictureUrl ? (
-                            <img src={driver.profilePictureUrl} alt={driver.name} className="driver-avatar" />
-                        ) : (
-                            <FaUserCircle className="driver-avatar-placeholder" />
-                        )}
-                    </div>
-                    <div className="driver-info-text">
-                        <span className="driver-name">{driver.name}</span>
-                        <div className="driver-rating">
-                            <FaStar className="star-icon" />
-                            <span className="rating-value">
-                                {driver.averageRating ? driver.averageRating.toFixed(1) : 'New'}
-                            </span>
+                    <div className="driver-left">
+                        <div className="driver-avatar-wrapper">
+                            {driver.profilePictureUrl ? (
+                                <img src={driver.profilePictureUrl} alt={driver.name} className="driver-avatar" />
+                            ) : (
+                                <FaUserCircle className="driver-avatar-placeholder" />
+                            )}
+                        </div>
+                        <div className="driver-info-text">
+                            <span className="driver-name">{driver.name}</span>
+                            <div className="driver-rating">
+                                <FaStar className="star-icon" />
+                                <span className="rating-value">
+                                    {driver.averageRating ? driver.averageRating.toFixed(1) : 'New'}
+                                </span>
+                            </div>
                         </div>
                     </div>
+                    <div className="date-badge">{formatDate(ride.travelDateTime)}</div>
                 </div>
 
                 <div className={`seats-container ${availableSeats <= 2 ? 'low-seats' : ''}`}>
