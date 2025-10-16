@@ -2,24 +2,33 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import Input from "../components/Input.jsx";
-import { useNotification } from '../context/NotificationContext.jsx'; // Import the hook
+import { useNotification } from '../context/NotificationContext.jsx';
 import "../App.css";
 import axios from "axios";
-import { FiUserPlus } from "react-icons/fi";
+import { FiUserPlus, FiCheck } from "react-icons/fi";
 
 function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [gender, setGender] = useState(""); 
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { showNotification } = useNotification(); // Use the hook
+  const { showNotification } = useNotification();
+
+  const passwordsMatch = password && confirmPassword && password === confirmPassword;
 
   const handleRegister = async (event) => {
     event.preventDefault();
+
+    if (!passwordsMatch) {
+      showNotification("Passwords do not match.", 'error');
+      return;
+    }
+
     if (!gender) {
-      showNotification("Please select your gender.", 'error'); // New notification
+      showNotification("Please select your gender.", 'error');
       return;
     }
     setIsLoading(true);
@@ -31,12 +40,12 @@ function RegisterPage() {
         gender,
       });
 
-      showNotification("Registration successful! Please log in."); // New notification
+      showNotification("Registration successful! Please log in.");
       navigate("/login");
 
     } catch (error) {
       const errorMessage = error.response?.data || "Registration failed. Please try again.";
-      showNotification(errorMessage, 'error'); // New notification
+      showNotification(errorMessage, 'error');
       console.error("Registration error:", error);
     } finally {
       setIsLoading(false);
@@ -74,6 +83,21 @@ function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <div className="input-wrapper">
+              <Input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              {passwordsMatch && (
+                <div style={{ color: 'var(--primary-color)', display: 'flex', alignItems: 'center', marginTop: '5px', fontSize: '0.9rem' }}>
+                  <FiCheck />
+                  <span style={{ marginLeft: '5px' }}>Passwords match!</span>
+                </div>
+              )}
+            </div>
             
             <div className="input-wrapper">
               <select 
@@ -90,7 +114,7 @@ function RegisterPage() {
               </select>
             </div>
 
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !passwordsMatch}>
               <FiUserPlus />
               {isLoading ? 'Creating Account...' : 'Register'}
             </Button>

@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StarRatingDisplay from '../components/StarRatingDisplay.jsx';
 import '../App.css';
-import { FaUserCircle, FaEnvelope, FaStar, FaCarSide, FaCommentDots, FaHistory, FaArrowRight, FaCalendarAlt } from 'react-icons/fa';
+import { FaUserCircle, FaEnvelope, FaStar, FaCarSide, FaCommentDots, FaHistory, FaArrowRight, FaCalendarAlt, FaPhone } from 'react-icons/fa';
 import Button from '../components/Button.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
 
 function PublicProfilePage() {
+    console.log('PublicProfilePage component loaded!');
     const { id } = useParams();
     const navigate = useNavigate();
     const { showNotification } = useNotification();
@@ -29,6 +30,8 @@ function PublicProfilePage() {
             try {
                 // Fetch public profile data
                 const profileResponse = await axios.get(`http://localhost:8080/api/employees/${id}`);
+                console.log('Public Profile Data:', profileResponse.data);
+                console.log('Phone Number:', profileResponse.data.phoneNumber);
                 setProfile(profileResponse.data);
 
                 // Fetch ratings received by this user
@@ -94,6 +97,7 @@ function PublicProfilePage() {
                     <div>
                         <p><strong><FaUserCircle /> Name:</strong> {profile.name}</p>
                         <p><strong><FaEnvelope /> Email:</strong> {profile.email}</p>
+                        <p><strong><FaPhone /> Phone:</strong> {profile.phoneNumber || profile.phone_number || 'Not provided'}</p>
                         <p><strong><FaStar /> Average Rating:</strong> {averageRating} {averageRating !== 'N/A' && <FaStar size={14} style={{ color: '#ffc107', marginLeft: '4px' }} />}</p>
                         <p><strong><FaCarSide /> Rides Completed:</strong> {totalRides}</p>
                     </div>

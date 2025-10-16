@@ -9,8 +9,9 @@ public class PublicProfileDTO {
     private Long id;
     private String name;
     private String email;
+    private String phoneNumber; // Add this line
     private String profilePictureUrl;
-    private String gender; // You can add this if you want gender to be public
+    private String gender;
     private Double averageRating;
     private Long totalRides;
     private List<Rating> receivedRatings;

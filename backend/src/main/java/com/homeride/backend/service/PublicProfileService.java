@@ -36,6 +36,7 @@ public class PublicProfileService {
         dto.setId(employee.getId());
         dto.setName(employee.getName());
         dto.setEmail(employee.getEmail());
+        dto.setPhoneNumber(employee.getPhoneNumber()); // Add this line
         dto.setProfilePictureUrl(employee.getProfilePictureUrl());
         dto.setGender(employee.getGender());
 

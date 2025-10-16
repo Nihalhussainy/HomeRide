@@ -5,7 +5,7 @@ import StarRatingDisplay from './StarRatingDisplay.jsx';
 import '../App.css';
 import './RatingModal.css';
 import './PublicProfileModal.css';
-import { FaUserCircle, FaEnvelope, FaStar, FaCarSide, FaCommentDots, FaArrowRight, FaCalendarAlt } from 'react-icons/fa';
+import { FaUserCircle, FaEnvelope, FaStar, FaCarSide, FaCommentDots, FaArrowRight, FaCalendarAlt, FaPhone } from 'react-icons/fa';
 import { useNotification } from '../context/NotificationContext.jsx';
 
 function PublicProfileModal({ userId, onClose }) {
@@ -18,6 +18,7 @@ function PublicProfileModal({ userId, onClose }) {
       setIsLoading(true);
       try {
         const response = await axios.get(`http://localhost:8080/api/employees/${userId}`);
+        //console.log('Profile data in modal:', response.data);
         setProfile(response.data);
       } catch (error) {
         console.error('Failed to fetch profile data:', error);
@@ -73,6 +74,7 @@ function PublicProfileModal({ userId, onClose }) {
           <div className="profile-summary-info">
             <p><strong><FaUserCircle /> Name:</strong> {profile.name}</p>
             <p><strong><FaEnvelope /> Email:</strong> {profile.email}</p>
+            <p><strong><FaPhone /> Phone:</strong> {profile.phoneNumber || 'Not provided'}</p>
             <p>
               <strong><FaStar /> Avg Rating:</strong> {profile.averageRating ? profile.averageRating.toFixed(1) : 'N/A'} {profile.averageRating && <FaStar size={14} style={{ color: '#ffc107', marginLeft: '4px' }} />}
             </p>
