@@ -416,6 +416,12 @@ public class RideRequestService {
         String pickupPoint = (String) segmentDetails.get("pickupPoint");
         String dropoffPoint = (String) segmentDetails.get("dropoffPoint");
         Double price = ((Number) segmentDetails.get("price")).doubleValue();
+        // MODIFIED CHECK for robustness
+        if (pickupPoint == null || pickupPoint.trim().isEmpty() ||
+                dropoffPoint == null || dropoffPoint.trim().isEmpty() ||
+                price == null) {
+            throw new IllegalStateException("Pickup point, drop-off point, and price must be provided.");
+        }
 
         // EXTRACT numberOfSeats from segmentDetails
         Integer numberOfSeats = 1; // Default to 1

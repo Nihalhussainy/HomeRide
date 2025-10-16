@@ -1,15 +1,12 @@
-// src/components/RideCard.jsx - Always show city names for all users
+// src/components/RideCard.jsx - Updated version with smart date display
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './RideCard.css';
-import axios from 'axios';
-import { useNotification } from '../context/NotificationContext.jsx';
-import { FiTrash2, FiCalendar, FiMapPin } from 'react-icons/fi';
+import { FiCalendar, FiMapPin } from 'react-icons/fi';
 import { FaUserCircle, FaCheckCircle } from 'react-icons/fa';
 
 function RideCard({ ride, currentUser, onActionSuccess }) {
     const navigate = useNavigate();
-    const { showConfirmation, showNotification } = useNotification();
 
     const driver = ride.requester;
     const isMyRide = currentUser?.id === driver?.id;
@@ -53,35 +50,14 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
     // Get display origin and destination with city names
     const displayOrigin = mySegment?.pickupPoint 
         ? getCityFromPoint(mySegment.pickupPoint) 
-        : ride.originCity;
+        : (ride.originCity || ride.origin?.split(',')[0] || 'Origin');
     
     const displayDestination = mySegment?.dropoffPoint 
         ? getCityFromPoint(mySegment.dropoffPoint) 
-        : ride.destinationCity;
+        : (ride.destinationCity || ride.destination?.split(',')[0] || 'Destination');
 
     const handleCardClick = (e) => {
-        if (e.target.closest('.card-action')) return;
         navigate(`/ride/${ride.id}`);
-    };
-
-    const handleDelete = (e) => {
-        e.stopPropagation();
-        showConfirmation("Are you sure you want to delete this ride?", async () => {
-            const token = localStorage.getItem('token');
-            try {
-                await axios.delete(`http://localhost:8080/api/rides/${ride.id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                showNotification("Ride deleted successfully.", 'success');
-                if (onActionSuccess) onActionSuccess();
-            } catch (error) {
-                console.error('Delete error:', error);
-                showNotification(
-                    error.response?.data?.message || "Failed to delete ride.",
-                    'error'
-                );
-            }
-        });
     };
 
     const formatTime = (dateTimeString) => {
@@ -116,11 +92,30 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
 
     const formatDate = (dateTimeString) => {
         try {
-            return new Date(dateTimeString).toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric'
-            });
+            const rideDate = new Date(dateTimeString);
+            const today = new Date();
+            
+            // Compare only the date parts (year, month, day)
+            const isSameDay = (date1, date2) => {
+                return date1.getFullYear() === date2.getFullYear() &&
+                       date1.getMonth() === date2.getMonth() &&
+                       date1.getDate() === date2.getDate();
+            };
+            
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            if (isSameDay(rideDate, today)) {
+                return 'Today';
+            } else if (isSameDay(rideDate, tomorrow)) {
+                return 'Tomorrow';
+            } else {
+                return rideDate.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
         } catch (error) {
             return 'Invalid Date';
         }
@@ -206,16 +201,6 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
                         <span className="status-tag departed">
                             Departed
                         </span>
-                    ) : isMyRide ? (
-                        <div
-                            className="delete-btn-wrapper"
-                            onClick={handleDelete}
-                            title="Delete Ride"
-                            role="button"
-                            tabIndex={0}
-                        >
-                            <FiTrash2 size={16} />
-                        </div>
                     ) : (
                         <div className="status-placeholder"></div>
                     )}

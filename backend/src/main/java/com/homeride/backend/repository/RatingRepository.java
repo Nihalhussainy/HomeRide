@@ -1,3 +1,4 @@
+// backend/src/main/java/com/homeride/backend/repository/RatingRepository.java
 package com.homeride.backend.repository;
 
 import com.homeride.backend.model.Employee;
@@ -14,6 +15,9 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     boolean existsByRideRequestAndRaterAndRatee(RideRequest rideRequest, Employee rater, Employee ratee);
     List<Rating> findByRater(Employee rater);
 
-    // NEW: A method to delete all ratings associated with a specific ride request.
     void deleteAllByRideRequest(RideRequest rideRequest);
+
+    // NEW: Methods to delete ratings associated with a specific user on a specific ride.
+    void deleteAllByRideRequestAndRater(RideRequest rideRequest, Employee rater);
+    void deleteAllByRideRequestAndRatee(RideRequest rideRequest, Employee ratee);
 }

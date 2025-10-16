@@ -58,9 +58,32 @@ function DashboardPage() {
 
       // Include rides that are upcoming or should still be shown
       const visibleRides = myRidesResponse.data.filter(ride => shouldShowRide(ride));
-      visibleRides.sort((a, b) => new Date(b.travelDateTime) - new Date(a.travelDateTime));
+      
+      const now = new Date();
+      
+      // Separate upcoming and departed/completed rides
+      const upcomingRidesList = [];
+      const departedRidesList = [];
+      
+      visibleRides.forEach(ride => {
+        const departureTime = new Date(ride.travelDateTime);
+        if (now < departureTime) {
+          upcomingRidesList.push(ride);
+        } else {
+          departedRidesList.push(ride);
+        }
+      });
+      
+      // Sort upcoming rides in ascending order (soonest first)
+      upcomingRidesList.sort((a, b) => new Date(a.travelDateTime) - new Date(b.travelDateTime));
+      
+      // Sort departed/completed rides in descending order (most recent first)
+      departedRidesList.sort((a, b) => new Date(b.travelDateTime) - new Date(a.travelDateTime));
+      
+      // Combine: upcoming rides first, then departed rides
+      const sortedRides = [...upcomingRidesList, ...departedRidesList];
 
-      setUpcomingRides(visibleRides);
+      setUpcomingRides(sortedRides);
 
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);

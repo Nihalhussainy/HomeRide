@@ -6,9 +6,10 @@ import Button from '../components/Button.jsx';
 import PublicProfileModal from '../components/PublicProfileModal.jsx';
 import ChatModal from '../components/ChatModal.jsx';
 import BookingConfirmationModal from '../components/BookingConfirmationModal.jsx';
+import CancelRideModal from '../components/CancelRideModal.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
 import { FaUserCircle, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
-import { FiClock, FiUsers, FiMapPin, FiArrowRight, FiCheckCircle, FiShield, FiMessageSquare, FiInfo, FiNavigation, FiUser } from 'react-icons/fi';
+import { FiClock, FiUsers, FiMapPin, FiArrowRight, FiCheckCircle, FiShield, FiMessageSquare, FiInfo, FiNavigation, FiUser, FiX } from 'react-icons/fi';
 import './RideDetailPage.css';
 import { GoogleMap, useJsApiLoader, DirectionsRenderer, MarkerF } from '@react-google-maps/api';
 
@@ -33,6 +34,8 @@ function RideDetailPage() {
     const [selectedProfileId, setSelectedProfileId] = useState(null);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [showBookingModal, setShowBookingModal] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [isCancelLoading, setIsCancelLoading] = useState(false);
     const [directions, setDirections] = useState(null);
 
     // Segment selection state
@@ -334,6 +337,38 @@ function RideDetailPage() {
         }
     };
 
+    const handleCancelRide = async (reason) => {
+        setIsCancelLoading(true);
+        const token = localStorage.getItem('token');
+        
+        try {
+            if (isUserDriver) {
+                // Cancel as driver - will cancel entire ride
+                await axios.post(`http://localhost:8080/api/rides/${id}/cancel-driver`, null, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                showNotification('Ride has been cancelled. All passengers have been notified.', 'success');
+            } else {
+                // Cancel as passenger - will just remove this user from ride
+                await axios.post(`http://localhost:8080/api/rides/${id}/cancel-passenger`, {
+                    reason: reason
+                }, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                showNotification('You have successfully left this ride.', 'success');
+            }
+            
+            setShowCancelModal(false);
+            // Redirect to dashboard after 1.5 seconds
+            setTimeout(() => navigate('/dashboard'), 1500);
+        } catch (error) {
+            console.error('Cancel error:', error);
+            showNotification(error.response?.data?.error || 'Failed to cancel ride.', 'error');
+        } finally {
+            setIsCancelLoading(false);
+        }
+    };
+
     // Calculate total seats booked by counting all participants' seats
     const totalSeatsBooked = useMemo(() => {
         if (!ride) return 0;
@@ -606,6 +641,87 @@ function RideDetailPage() {
                                 {renderActionButton()}
                             </div>
                         )}
+
+                        {/* Leave Ride Button - Passenger */}
+                        {!isUserDriver && isUserInvolved && rideStatus === 'upcoming' && (
+                            <div style={{
+                                marginTop: '16px',
+                                padding: '16px',
+                                background: 'rgba(239, 68, 68, 0.05)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                borderRadius: '12px'
+                            }}>
+                                <button
+                                    onClick={() => setShowCancelModal(true)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        borderRadius: '10px',
+                                        color: '#ef4444',
+                                        fontWeight: '600',
+                                        fontSize: '1rem',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                                        e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    <FiX size={18} /> Leave Ride
+                                </button>
+                            </div>
+                        )}
+
+                        {isUserDriver && rideStatus === 'upcoming' && (
+                            <div style={{
+                                marginTop: '16px',
+                                padding: '16px',
+                                background: 'rgba(239, 68, 68, 0.05)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                borderRadius: '12px'
+                            }}>
+                                <button
+                                    onClick={() => setShowCancelModal(true)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        borderRadius: '10px',
+                                        color: '#ef4444',
+                                        fontWeight: '600',
+                                        fontSize: '1rem',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                                        e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    <FiX size={18} /> Cancel Ride
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {(isUserInvolved || isUserDriver) && (
@@ -653,6 +769,19 @@ function RideDetailPage() {
                     isLoading={isActionLoading}
                 />
             )}
+
+            <CancelRideModal 
+                isOpen={showCancelModal}
+                onClose={() => setShowCancelModal(false)}
+                onConfirm={handleCancelRide}
+                isLoading={isCancelLoading}
+                rideInfo={{
+                    from: getCityFromPoint(pickupPoint),
+                    to: getCityFromPoint(dropoffPoint),
+                    date: formatDate(ride.travelDateTime)
+                }}
+                isDriver={isUserDriver}
+            />
         </div>
     );
 }

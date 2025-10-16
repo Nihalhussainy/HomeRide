@@ -1,3 +1,4 @@
+// backend/src/main/java/com/homeride/backend/service/RatingService.java
 package com.homeride.backend.service;
 
 import com.homeride.backend.dto.RatingDTO;
@@ -51,6 +52,13 @@ public class RatingService {
     public void deleteAllRatingsForRide(RideRequest rideRequest) {
         ratingRepository.deleteAllByRideRequest(rideRequest);
     }
+
+    // NEW: Method to clean up ratings when a passenger leaves a ride.
+    public void deleteRatingsForParticipantOnRide(RideRequest ride, Employee participant) {
+        ratingRepository.deleteAllByRideRequestAndRater(ride, participant);
+        ratingRepository.deleteAllByRideRequestAndRatee(ride, participant);
+    }
+
     public List<Rating> getRatingsForUser(String userEmail) {
         Employee employee = employeeRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
