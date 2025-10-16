@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import '../StaticPages.css';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
@@ -9,19 +10,31 @@ import { useNotification } from '../context/NotificationContext.jsx';
 function ContactPage() {
     const { showNotification } = useNotification();
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // NOTE: This is a front-end simulation. A real form would
-        // need a backend API to send an email.
-        console.log("Form submitted:", formData);
-        showNotification("Thank you for your message! We'll get back to you soon.");
-        setFormData({ name: '', email: '', message: '' }); // Reset form
+        setIsSubmitting(true);
+
+        try {
+            const response = await axios.post('http://localhost:8080/api/contact/send', formData);
+            
+            showNotification(response.data.message || "Thank you for your message! We'll get back to you soon.", 'success');
+            setFormData({ name: '', email: '', message: '' }); // Reset form
+        } catch (error) {
+            console.error('Error sending message:', error);
+            showNotification(
+                error.response?.data?.message || 'Failed to send message. Please try again later.',
+                'error'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
 
@@ -40,17 +53,11 @@ function ContactPage() {
           <ul className="contact-details-list">
             <li>
                 <FiMail className="contact-icon" />
-                {/* REPLACE THIS WITH YOUR EMAIL */}
-                <a href="mailto:support@homeride.com">support@homeride.com</a>
+                <a href="mailto:contacthomeride@gmail.com">contacthomeride@gmail.com</a>
             </li>
-            <li>
-                <FiPhone className="contact-icon" />
-                {/* REPLACE THIS WITH YOUR PHONE NUMBER */}
-                <span>+91 123 456 7890</span>
-            </li>
+            
             <li>
                 <FiMapPin className="contact-icon" />
-                {/* REPLACE THIS WITH YOUR ADDRESS */}
                 <span>India</span>
             </li>
           </ul>
@@ -65,6 +72,7 @@ function ContactPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
+                    disabled={isSubmitting}
                 />
                 <Input
                     type="email"
@@ -73,6 +81,7 @@ function ContactPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    disabled={isSubmitting}
                 />
                 <textarea
                     name="message"
@@ -82,9 +91,10 @@ function ContactPage() {
                     value={formData.message}
                     onChange={handleInputChange}
                     required
+                    disabled={isSubmitting}
                 ></textarea>
-                <Button type="submit">
-                    <FiSend /> Send Message
+                <Button type="submit" disabled={isSubmitting}>
+                    <FiSend /> {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
             </form>
         </div>

@@ -48,6 +48,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/contact/**").permitAll()   // 👈 add this line
+
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/places/**").permitAll()
                         .requestMatchers("/api/maps/**").permitAll()
