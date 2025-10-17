@@ -7,9 +7,10 @@ import PublicProfileModal from '../components/PublicProfileModal.jsx';
 import ChatModal from '../components/ChatModal.jsx';
 import BookingConfirmationModal from '../components/BookingConfirmationModal.jsx';
 import CancelRideModal from '../components/CancelRideModal.jsx';
+import ReportRideModal from '../components/ReportRideModal.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
 import { FaUserCircle, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
-import { FiClock, FiUsers, FiMapPin, FiArrowRight, FiCheckCircle, FiShield, FiMessageSquare, FiInfo, FiNavigation, FiUser, FiX } from 'react-icons/fi';
+import { FiClock, FiUsers, FiMapPin, FiArrowRight, FiCheckCircle, FiShield, FiMessageSquare, FiInfo, FiNavigation, FiUser, FiX, FiAlertTriangle } from 'react-icons/fi';
 import './RideDetailPage.css';
 import { GoogleMap, useJsApiLoader, DirectionsRenderer, MarkerF } from '@react-google-maps/api';
 
@@ -36,6 +37,8 @@ function RideDetailPage() {
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [isCancelLoading, setIsCancelLoading] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [isReportLoading, setIsReportLoading] = useState(false);
     const [directions, setDirections] = useState(null);
 
     // Segment selection state
@@ -343,13 +346,11 @@ function RideDetailPage() {
         
         try {
             if (isUserDriver) {
-                // Cancel as driver - will cancel entire ride
                 await axios.post(`http://localhost:8080/api/rides/${id}/cancel-driver`, null, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 showNotification('Ride has been cancelled. All passengers have been notified.', 'success');
             } else {
-                // Cancel as passenger - will just remove this user from ride
                 await axios.post(`http://localhost:8080/api/rides/${id}/cancel-passenger`, {
                     reason: reason
                 }, {
@@ -359,7 +360,6 @@ function RideDetailPage() {
             }
             
             setShowCancelModal(false);
-            // Redirect to dashboard after 1.5 seconds
             setTimeout(() => navigate('/dashboard'), 1500);
         } catch (error) {
             console.error('Cancel error:', error);
@@ -369,7 +369,31 @@ function RideDetailPage() {
         }
     };
 
-    // Calculate total seats booked by counting all participants' seats
+    const handleReportRide = async (reportData) => {
+        setIsReportLoading(true);
+
+        try {
+            const emailContent = {
+                name: currentUser.name,
+                email: currentUser.email,
+                message: `RIDE REPORT\n\nRide: ${reportData.rideInfo.from} → ${reportData.rideInfo.to}\nDate: ${reportData.rideInfo.date}\nReason: ${reportData.reason}\n\nDetails:\n${reportData.description}`
+            };
+
+            await axios.post('http://localhost:8080/api/contact/send', emailContent);
+
+            showNotification('Thank you for reporting this ride. Our team will review it shortly.', 'success');
+            setShowReportModal(false);
+        } catch (error) {
+            console.error('Error submitting report:', error);
+            showNotification(
+                error.response?.data?.message || 'Failed to submit report. Please try again later.',
+                'error'
+            );
+        } finally {
+            setIsReportLoading(false);
+        }
+    };
+
     const totalSeatsBooked = useMemo(() => {
         if (!ride) return 0;
         return ride.participants.reduce((total, p) => {
@@ -377,7 +401,6 @@ function RideDetailPage() {
         }, 0);
     }, [ride]);
 
-    // Get current user's booking details
     const userBookingDetails = useMemo(() => {
         if (!currentUser || !ride) return null;
         const userParticipant = ride.participants.find(p => p.participant.id === currentUser.id);
@@ -642,7 +665,6 @@ function RideDetailPage() {
                             </div>
                         )}
 
-                        {/* Leave Ride Button - Passenger */}
                         {!isUserDriver && isUserInvolved && rideStatus === 'upcoming' && (
                             <div style={{
                                 marginTop: '16px',
@@ -741,6 +763,49 @@ function RideDetailPage() {
                             </Button>
                         </div>
                     )}
+
+                    {!isUserDriver && (
+                        <div className="detail-card report-card">
+                            <h3><FiAlertTriangle /> Report Issue</h3>
+                            <p style={{
+                                fontSize: '0.9rem',
+                                color: 'var(--text-secondary)',
+                                margin: '0 0 16px 0',
+                                lineHeight: '1.5'
+                            }}>
+                                If you experienced any issues with this ride, please let us know.
+                            </p>
+                            <button
+                                onClick={() => setShowReportModal(true)}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    borderRadius: '10px',
+                                    color: '#ef4444',
+                                    fontWeight: '600',
+                                    fontSize: '1rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                }}
+                            >
+                                <FiAlertTriangle size={18} /> Report Ride
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -781,6 +846,18 @@ function RideDetailPage() {
                     date: formatDate(ride.travelDateTime)
                 }}
                 isDriver={isUserDriver}
+            />
+
+            <ReportRideModal
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                onSubmit={handleReportRide}
+                isLoading={isReportLoading}
+                rideInfo={{
+                    from: getCityFromPoint(pickupPoint),
+                    to: getCityFromPoint(dropoffPoint),
+                    date: formatDate(ride.travelDateTime)
+                }}
             />
         </div>
     );

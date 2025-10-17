@@ -915,3 +915,20 @@
         padding: 8px 14px;
     }
 }
+
+/* Report Card */
+.report-card {
+    margin-top: 20px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.02);
+}
+
+.report-card h3 {
+    color: #ef4444;
+    border-bottom-color: rgba(239, 68, 68, 0.2);
+}
+
+.report-card h3 svg {
+    color: #ef4444;
+    font-size: 1.2rem;
+}

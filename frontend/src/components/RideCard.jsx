@@ -1,4 +1,4 @@
-// src/components/RideCard.jsx - Updated version with smart date display
+// src/components/RideCard.jsx - Updated with city names only
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './RideCard.css';
@@ -26,6 +26,14 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
     const hasCompleted = now > completionTime;
     const mySegment = ride.participants?.find(p => p.participant.id === currentUser?.id);
 
+    // Helper function to extract city name from full address
+    const extractCityName = (address) => {
+        if (!address) return '';
+        // Split by comma and take the first part (which is usually the city)
+        const parts = address.split(',');
+        return parts[0].trim();
+    };
+
     // Create arrays of route points and cities
     const routePoints = useMemo(() => {
         if (!ride) return [];
@@ -42,19 +50,21 @@ function RideCard({ ride, currentUser, onActionSuccess }) {
         if (!point) return '';
         const pointIndex = routePoints.indexOf(point);
         if (pointIndex !== -1 && routeCities[pointIndex]) {
-            return routeCities[pointIndex];
+            // Extract only the city name from the city field
+            return extractCityName(routeCities[pointIndex]);
         }
-        return point.split(',')[0]; // Fallback
+        // Fallback: extract from the point itself
+        return extractCityName(point);
     };
 
-    // Get display origin and destination with city names
+    // Get display origin and destination with city names only
     const displayOrigin = mySegment?.pickupPoint 
         ? getCityFromPoint(mySegment.pickupPoint) 
-        : (ride.originCity || ride.origin?.split(',')[0] || 'Origin');
+        : extractCityName(ride.originCity || ride.origin || 'Origin');
     
     const displayDestination = mySegment?.dropoffPoint 
         ? getCityFromPoint(mySegment.dropoffPoint) 
-        : (ride.destinationCity || ride.destination?.split(',')[0] || 'Destination');
+        : extractCityName(ride.destinationCity || ride.destination || 'Destination');
 
     const handleCardClick = (e) => {
         navigate(`/ride/${ride.id}`);

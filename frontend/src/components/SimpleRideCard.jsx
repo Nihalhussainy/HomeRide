@@ -1,4 +1,4 @@
-// src/components/SimpleRideCard.jsx - Updated with date badge and removed segment fare text
+// src/components/SimpleRideCard.jsx - Updated with city names only
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserCircle, FaStar } from 'react-icons/fa';
@@ -10,6 +10,14 @@ function SimpleRideCard({ ride, searchOrigin, searchDestination }) {
     const driver = ride.requester;
     const availableSeats = ride.vehicleCapacity - ride.participants.length;
 
+    // Helper function to extract city name from full address
+    const extractCityName = (address) => {
+        if (!address) return '';
+        // Split by comma and take the first part (which is usually the city)
+        const parts = address.split(',');
+        return parts[0].trim();
+    };
+
     // Helper function to normalize and extract main city name
     const extractMainCity = (location) => {
         if (!location) return '';
@@ -17,7 +25,7 @@ function SimpleRideCard({ ride, searchOrigin, searchDestination }) {
         
         // Common city names to look for
         const cities = ['mumbai', 'chennai', 'tirupati', 'kerala', 'bangalore', 
-                       'hyderabad', 'delhi', 'kolkata', 'pune', 'ahmedabad'];
+                       'hyderabad', 'delhi', 'kolkata', 'pune', 'ahmedabad', 'nellore'];
         
         for (const city of cities) {
             if (normalized.includes(city)) return city;
@@ -52,8 +60,8 @@ function SimpleRideCard({ ride, searchOrigin, searchDestination }) {
         // If no search parameters, show full route
         if (!searchOrigin && !searchDestination) {
             return {
-                origin: ride.originCity,
-                destination: ride.destinationCity,
+                origin: extractCityName(ride.originCity),
+                destination: extractCityName(ride.destinationCity),
                 price: ride.price,
                 isSegment: false,
                 specificOrigin: ride.origin,
@@ -189,8 +197,8 @@ function SimpleRideCard({ ride, searchOrigin, searchDestination }) {
             }
 
             return {
-                origin: routeCities[originIndex],
-                destination: routeCities[destIndex],
+                origin: extractCityName(routeCities[originIndex]),
+                destination: extractCityName(routeCities[destIndex]),
                 price: segmentPrice,
                 isSegment: true,
                 specificOrigin: routePoints[originIndex],
@@ -201,8 +209,8 @@ function SimpleRideCard({ ride, searchOrigin, searchDestination }) {
 
         // Fallback: show full route
         return {
-            origin: ride.originCity,
-            destination: ride.destinationCity,
+            origin: extractCityName(ride.originCity),
+            destination: extractCityName(ride.destinationCity),
             price: ride.price,
             isSegment: false,
             specificOrigin: ride.origin,
