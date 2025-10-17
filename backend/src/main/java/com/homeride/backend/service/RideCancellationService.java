@@ -9,7 +9,6 @@ import com.homeride.backend.repository.RideParticipantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Objects;
 
 @Service
 public class RideCancellationService {
@@ -48,11 +47,11 @@ public class RideCancellationService {
         ride.getParticipants().remove(participantToRemove);
         rideParticipantRepository.delete(participantToRemove);
 
-        // CORRECTED: Delete only ratings associated with this specific user for this ride
+        // Delete only ratings associated with this specific user for this ride
         ratingService.deleteRatingsForParticipantOnRide(ride, participantUser);
 
-        // Notify the driver
-        String driverMessage = "A passenger has cancelled their booking for your ride from " +
+        // UPDATED: Notify the driver with passenger's name
+        String driverMessage = participantUser.getName() + " has cancelled their booking for your ride from " +
                 ride.getOriginCity() + " to " + ride.getDestinationCity();
 
         notificationService.createNotification(

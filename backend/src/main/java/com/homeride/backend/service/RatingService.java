@@ -4,7 +4,7 @@ package com.homeride.backend.service;
 import com.homeride.backend.dto.RatingDTO;
 import com.homeride.backend.model.Employee;
 import com.homeride.backend.model.Rating;
-import com.homeride.backend.model.RideRequest; // Correctly imported
+import com.homeride.backend.model.RideRequest;
 import com.homeride.backend.repository.EmployeeRepository;
 import com.homeride.backend.repository.RatingRepository;
 import com.homeride.backend.repository.RideRequestRepository;
@@ -18,12 +18,17 @@ public class RatingService {
     private final RatingRepository ratingRepository;
     private final EmployeeRepository employeeRepository;
     private final RideRequestRepository rideRequestRepository;
+    private final NotificationService notificationService;
 
     @Autowired
-    public RatingService(RatingRepository ratingRepository, EmployeeRepository employeeRepository, RideRequestRepository rideRequestRepository) {
+    public RatingService(RatingRepository ratingRepository,
+                         EmployeeRepository employeeRepository,
+                         RideRequestRepository rideRequestRepository,
+                         NotificationService notificationService) {
         this.ratingRepository = ratingRepository;
         this.employeeRepository = employeeRepository;
         this.rideRequestRepository = rideRequestRepository;
+        this.notificationService = notificationService;
     }
 
     public Rating submitRating(RatingDTO ratingDTO, String raterEmail) {
@@ -47,13 +52,27 @@ public class RatingService {
         newRating.setScore(ratingDTO.getScore());
         newRating.setComment(ratingDTO.getComment());
 
-        return ratingRepository.save(newRating);
+        Rating savedRating = ratingRepository.save(newRating);
+
+        // CREATE NOTIFICATION FOR THE PERSON WHO WAS RATED
+        String message = rater.getName() + " rated you for the ride from " +
+                rideRequest.getOriginCity() + " to " + rideRequest.getDestinationCity();
+        notificationService.createNotification(
+                ratee,
+                message,
+                "/ride/" + rideRequest.getId(),
+                "RATING_RECEIVED",
+                rideRequest.getId()
+        );
+
+        return savedRating;
     }
+
     public void deleteAllRatingsForRide(RideRequest rideRequest) {
         ratingRepository.deleteAllByRideRequest(rideRequest);
     }
 
-    // NEW: Method to clean up ratings when a passenger leaves a ride.
+    // Method to clean up ratings when a passenger leaves a ride.
     public void deleteRatingsForParticipantOnRide(RideRequest ride, Employee participant) {
         ratingRepository.deleteAllByRideRequestAndRater(ride, participant);
         ratingRepository.deleteAllByRideRequestAndRatee(ride, participant);
