@@ -180,21 +180,42 @@ function RideDetailPage() {
         return parts[0].trim();
     }, []);
 
-    const locationsMatch = useCallback((loc1, loc2) => {
-        if (!loc1 || !loc2) return false;
+   const locationsMatch = useCallback((loc1, loc2) => {
+    if (!loc1 || !loc2) return false;
+    
+    const l1 = loc1.toLowerCase().trim();
+    const l2 = loc2.toLowerCase().trim();
+    
+    // Exact match
+    if (l1 === l2) return true;
+    
+    // Normalize by removing common suffixes and standardizing
+    const normalize = (str) => {
+        return str
+            .replace(/,\s*india$/i, '')
+            .replace(/,\s*andhra pradesh$/i, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+    
+    const normalized1 = normalize(l1);
+    const normalized2 = normalize(l2);
+    
+    if (normalized1 === normalized2) return true;
+    
+    // Only match if one is a proper substring at the beginning (for abbreviated addresses)
+    if (normalized1.startsWith(normalized2) || normalized2.startsWith(normalized1)) {
+        const longer = normalized1.length > normalized2.length ? normalized1 : normalized2;
+        const shorter = normalized1.length > normalized2.length ? normalized2 : normalized1;
         
-        const l1 = loc1.toLowerCase().trim();
-        const l2 = loc2.toLowerCase().trim();
-        
-        if (l1 === l2) return true;
-        if (l1.includes(l2) || l2.includes(l1)) return true;
-        
-        const city1 = extractMainCity(loc1);
-        const city2 = extractMainCity(loc2);
-        
-        return city1 === city2 && city1.length >= 3;
-    }, [extractMainCity]);
-
+        // If the longer string just adds more detail after a comma, it's a match
+        if (longer.startsWith(shorter) && (longer.charAt(shorter.length) === ',' || longer.charAt(shorter.length) === ' ')) {
+            return true;
+        }
+    }
+    
+    return false;
+}, []);
     const getCityFromPoint = useCallback((point) => {
         if (!ride || !point) return '';
         
@@ -298,18 +319,17 @@ function RideDetailPage() {
     };
 
     const handleBookOrJoin = async (passengerCount) => {
-        let pickupIndex = -1;
-        let dropoffIndex = -1;
-
-        for (let i = 0; i < routePoints.length; i++) {
-            if (pickupIndex === -1 && locationsMatch(routePoints[i], pickupPoint)) {
-                pickupIndex = i;
-            }
-            if (pickupIndex !== -1 && locationsMatch(routePoints[i], dropoffPoint)) {
-                dropoffIndex = i;
-                break;
-            }
-        }
+       let pickupIndex = -1;
+let dropoffIndex = -1;
+for (let i = 0; i < routePoints.length; i++) {
+    if (pickupIndex === -1 && locationsMatch(routePoints[i], pickupPoint)) {
+        pickupIndex = i;
+    }
+    if (pickupIndex !== -1 && i > pickupIndex && locationsMatch(routePoints[i], dropoffPoint)) {
+        dropoffIndex = i;
+        break;
+    }
+}
 
         if (pickupIndex === -1 || dropoffIndex === -1 || pickupIndex >= dropoffIndex) {
             showNotification('Please select valid pickup and drop-off points.', 'error');
@@ -419,14 +439,14 @@ function RideDetailPage() {
         let pickupIndex = -1;
         let dropoffIndex = -1;
         for (let i = 0; i < routePoints.length; i++) {
-            if (pickupIndex === -1 && locationsMatch(routePoints[i], pickupPoint)) {
-                pickupIndex = i;
-            }
-            if (pickupIndex !== -1 && locationsMatch(routePoints[i], dropoffPoint)) {
-                dropoffIndex = i;
-                break;
-            }
-        }
+    if (pickupIndex === -1 && locationsMatch(routePoints[i], pickupPoint)) {
+        pickupIndex = i;
+    }
+    if (pickupIndex !== -1 && i > pickupIndex && locationsMatch(routePoints[i], dropoffPoint)) {
+        dropoffIndex = i;
+        break;
+    }
+}
         
         const validSelection = pickupIndex !== -1 && dropoffIndex !== -1 && pickupIndex < dropoffIndex;
         
