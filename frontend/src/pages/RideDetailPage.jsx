@@ -9,7 +9,7 @@ import BookingConfirmationModal from '../components/BookingConfirmationModal.jsx
 import CancelRideModal from '../components/CancelRideModal.jsx';
 import ReportRideModal from '../components/ReportRideModal.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
-import { FaUserCircle, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
+import { FaUserCircle, FaWhatsapp, FaCheckCircle, FaCar } from 'react-icons/fa';
 import { FiClock, FiUsers, FiMapPin, FiArrowRight, FiCheckCircle, FiShield, FiMessageSquare, FiInfo, FiNavigation, FiUser, FiX, FiAlertTriangle } from 'react-icons/fi';
 import './RideDetailPage.css';
 import { GoogleMap, useJsApiLoader, DirectionsRenderer, MarkerF } from '@react-google-maps/api';
@@ -586,8 +586,22 @@ for (let i = 0; i < routePoints.length; i++) {
                         </div>
 
                         <div className="info-grid">
-                            <div className="info-block"><span><FiUsers />Seats</span><p>{totalSeatsBooked} / {ride.vehicleCapacity || 'N/A'}</p></div>
-                            <div className="info-block"><span><FiShield />Gender Preference</span><p>{ride.genderPreference === 'FEMALE_ONLY' ? 'Female only' : 'Both'}</p></div>
+                            <div className="info-block">
+                                <span><FiUsers />Seats</span>
+                                <p>{totalSeatsBooked} / {ride.vehicleCapacity || 'N/A'}</p>
+                            </div>
+                            <div className="info-block">
+                                <span><FaCar />Vehicle</span>
+                                <p>{ride.vehicleModel || 'Not specified'}</p>
+                            </div>
+                            <div className="info-block">
+                                <span><FiClock />Duration</span>
+                                <p>{formatDuration(ride.duration)}</p>
+                            </div>
+                            <div className="info-block">
+                                <span><FiShield />Gender Preference</span>
+                                <p>{ride.genderPreference === 'FEMALE_ONLY' ? 'Female only' : 'Both'}</p>
+                            </div>
                         </div>
 
                         {ride.driverNote && (

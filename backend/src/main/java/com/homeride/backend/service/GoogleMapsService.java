@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.google.maps.DirectionsApiRequest;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class GoogleMapsService {
@@ -25,14 +27,51 @@ public class GoogleMapsService {
     @Value("${google.maps.api.key:}")
     private String apiKey;
 
-    private static final TravelInfo DEFAULT_TRAVEL_INFO = new TravelInfo(180, 200.0, "", "Default Route");
+    private static final TravelInfo DEFAULT_TRAVEL_INFO = new TravelInfo(200, 180.0, "", "Default Route", new ArrayList<>());
 
     @Autowired
     public GoogleMapsService(GeoApiContext geoApiContext) {
         this.geoApiContext = geoApiContext;
     }
 
-    public TravelInfo getTravelInfo(String origin, String destination, String[] stops) {
+    /**
+     * Get direct route distance (for pricing calculations)
+     * Origin to destination ONLY, ignoring any stopovers
+     */
+    public double getDirectDistance(String origin, String destination) {
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            logger.warn("Google Maps API key is not configured. Returning default distance.");
+            return 180.0;
+        }
+        try {
+            DirectionsApiRequest request = DirectionsApi.newRequest(geoApiContext)
+                    .origin(origin)
+                    .destination(destination);
+
+            DirectionsResult result = request.await();
+
+            if (result.routes != null && result.routes.length > 0) {
+                DirectionsRoute route = result.routes[0];
+                long totalDistanceInMeters = Arrays.stream(route.legs)
+                        .mapToLong(leg -> leg.distance.inMeters)
+                        .sum();
+                double distanceInKm = totalDistanceInMeters / 1000.0;
+
+                logger.info("Direct Distance (for pricing): {} to {} = {:.2f}km",
+                        origin, destination, distanceInKm);
+                return distanceInKm;
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching direct distance from Google Maps API: {}", e.getMessage());
+        }
+        return DEFAULT_TRAVEL_INFO.getDistanceInKm();
+    }
+
+    /**
+     * Get full route info WITH stopovers (for display/logistics)
+     * This includes segment distances for each leg of the journey
+     */
+    public TravelInfo getTravelInfoWithStopovers(String origin, String destination, String[] stops) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             logger.warn("Google Maps API key is not configured. Returning default travel info.");
             return DEFAULT_TRAVEL_INFO;
@@ -42,7 +81,6 @@ public class GoogleMapsService {
                     .origin(origin)
                     .destination(destination);
 
-            // NEW: Add waypoints to the request if they exist
             if (stops != null && stops.length > 0) {
                 request.waypoints(stops);
             }
@@ -54,19 +92,45 @@ public class GoogleMapsService {
                 String polyline = route.overviewPolyline.getEncodedPath();
                 String summary = route.summary;
 
-                // Sum up distance and duration from all legs of the journey
-                long totalDurationInSeconds = Arrays.stream(route.legs).mapToLong(leg -> leg.duration.inSeconds).sum();
-                long totalDistanceInMeters = Arrays.stream(route.legs).mapToLong(leg -> leg.distance.inMeters).sum();
+                long totalDurationInSeconds = Arrays.stream(route.legs)
+                        .mapToLong(leg -> leg.duration.inSeconds)
+                        .sum();
+                long totalDistanceInMeters = Arrays.stream(route.legs)
+                        .mapToLong(leg -> leg.distance.inMeters)
+                        .sum();
 
                 int durationInMinutes = (int) (totalDurationInSeconds / 60);
                 double distanceInKm = totalDistanceInMeters / 1000.0;
 
-                return new TravelInfo(durationInMinutes, distanceInKm, polyline, summary);
+                // Calculate segment distances (these are the actual leg distances with stopovers)
+                List<Double> segmentDistances = new ArrayList<>();
+                for (int i = 0; i < route.legs.length; i++) {
+                    double segmentDistanceKm = route.legs[i].distance.inMeters / 1000.0;
+                    segmentDistances.add(segmentDistanceKm);
+                    logger.debug("Segment {}: {} → {} = {:.2f}km",
+                            i + 1,
+                            route.legs[i].startAddress,
+                            route.legs[i].endAddress,
+                            segmentDistanceKm);
+                }
+
+                logger.info("Route with Stopovers - Total Distance: {:.2f}km, Duration: {}min, Segments: {}",
+                        distanceInKm, durationInMinutes, segmentDistances.size());
+
+                return new TravelInfo(durationInMinutes, distanceInKm, polyline, summary, segmentDistances);
             }
         } catch (Exception e) {
-            logger.error("Error fetching travel info from Google Maps API: {}", e.getMessage());
+            logger.error("Error fetching travel info with stopovers from Google Maps API: {}", e.getMessage());
         }
         return DEFAULT_TRAVEL_INFO;
+    }
+
+    /**
+     * Get complete travel info (kept for backward compatibility)
+     * Now combines direct distance for pricing with stopover route for logistics
+     */
+    public TravelInfo getTravelInfo(String origin, String destination, String[] stops) {
+        return getTravelInfoWithStopovers(origin, destination, stops);
     }
 
     public LatLng geocodeAddress(String address) {

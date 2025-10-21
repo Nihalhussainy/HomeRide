@@ -73,6 +73,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/employees/me/profile-picture").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/employees/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/chat/history/**").authenticated()
+                        .requestMatchers("/api/chatbot/**").authenticated()
 
                         .anyRequest().authenticated()
                 )

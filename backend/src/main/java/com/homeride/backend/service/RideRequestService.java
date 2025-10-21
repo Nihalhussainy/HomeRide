@@ -1,4 +1,3 @@
-// backend/service/RideRequestService.java
 package com.homeride.backend.service;
 
 import com.google.maps.model.LatLng;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class RideRequestService {
@@ -37,6 +37,7 @@ public class RideRequestService {
     private final GoogleMapsService googleMapsService;
     private final RatingService ratingService;
     private final NotificationService notificationService;
+    private final PricingService pricingService;
 
     @Autowired
     public RideRequestService(RideRequestRepository rideRequestRepository,
@@ -44,15 +45,165 @@ public class RideRequestService {
                               RideParticipantRepository rideParticipantRepository,
                               GoogleMapsService googleMapsService,
                               RatingService ratingService,
-                              NotificationService notificationService) {
+                              NotificationService notificationService,
+                              PricingService pricingService) {
         this.rideRequestRepository = rideRequestRepository;
         this.employeeRepository = employeeRepository;
         this.rideParticipantRepository = rideParticipantRepository;
         this.googleMapsService = googleMapsService;
         this.ratingService = ratingService;
         this.notificationService = notificationService;
+        this.pricingService = pricingService;
     }
 
+    @Transactional
+    public RideRequest createRideOffer(RideRequestDTO rideRequestDTO, String requesterEmail) {
+        Employee requester = employeeRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new RuntimeException("Employee not found with email: " + requesterEmail));
+
+        RideRequest newRideOffer = new RideRequest();
+        newRideOffer.setOriginCity(rideRequestDTO.getOriginCity());
+        newRideOffer.setOrigin(rideRequestDTO.getOrigin());
+        newRideOffer.setDestinationCity(rideRequestDTO.getDestinationCity());
+        newRideOffer.setDestination(rideRequestDTO.getDestination());
+        newRideOffer.setTravelDateTime(rideRequestDTO.getTravelDateTime());
+        newRideOffer.setStatus("PENDING");
+        newRideOffer.setRequester(requester);
+        newRideOffer.setRideType("OFFERED");
+        newRideOffer.setVehicleModel(rideRequestDTO.getVehicleModel());
+        newRideOffer.setVehicleCapacity(rideRequestDTO.getVehicleCapacity());
+        newRideOffer.setGenderPreference(rideRequestDTO.getGenderPreference());
+        newRideOffer.setDriverNote(rideRequestDTO.getDriverNote());
+
+        // Process Stops
+        List<Stopover> stopoverEntities = new ArrayList<>();
+        if (rideRequestDTO.getStops() != null) {
+            stopoverEntities = rideRequestDTO.getStops().stream()
+                    .filter(dto -> dto.getPoint() != null && !dto.getPoint().trim().isEmpty())
+                    .map(dto -> {
+                        Stopover stopover = new Stopover();
+                        stopover.setCity(dto.getCity());
+                        stopover.setPoint(dto.getPoint());
+                        stopover.setRideRequest(newRideOffer);
+                        try {
+                            LatLng location = googleMapsService.geocodeAddress(dto.getPoint());
+                            if (location != null) {
+                                stopover.setLat(location.lat);
+                                stopover.setLng(location.lng);
+                            }
+                        } catch (Exception e) {
+                            logger.error("Could not geocode stopover point: {}", dto.getPoint(), e);
+                        }
+                        return stopover;
+                    })
+                    .collect(Collectors.toList());
+            newRideOffer.setStopovers(stopoverEntities);
+        }
+
+        // ===== KEY CHANGE: GET DIRECT DISTANCE FOR PRICING =====
+        // This is independent of stopovers
+        double directDistance = googleMapsService.getDirectDistance(
+                rideRequestDTO.getOrigin(),
+                rideRequestDTO.getDestination()
+        );
+        logger.info("Direct Distance (for pricing): {:.2f}km", directDistance);
+
+        // ===== GET FULL ROUTE INFO WITH STOPOVERS (for display & segment pricing) =====
+        String[] stopsArray = stopoverEntities.stream()
+                .map(Stopover::getPoint)
+                .toArray(String[]::new);
+        TravelInfo travelInfo = googleMapsService.getTravelInfoWithStopovers(
+                rideRequestDTO.getOrigin(),
+                rideRequestDTO.getDestination(),
+                stopsArray
+        );
+
+        double actualRouteDistance = travelInfo.getDistanceInKm();
+        newRideOffer.setDuration(travelInfo.getDurationInMinutes());
+        newRideOffer.setDistance(actualRouteDistance); // Store actual route distance
+        newRideOffer.setRoutePolyline(travelInfo.getPolyline());
+
+        // ===== PRICING: USE DIRECT DISTANCE ONLY =====
+        int numberOfSegments = stopoverEntities.size() + 1;
+
+        // Calculate TOTAL RIDE price range based on DIRECT DISTANCE ONLY (stopovers don't affect pricing)
+        PricingService.PriceRange totalRange = pricingService.getTotalPriceRange(directDistance);
+
+        double finalTotalPrice = (rideRequestDTO.getPrice() != null &&
+                rideRequestDTO.getPrice() >= totalRange.minPrice &&
+                rideRequestDTO.getPrice() <= totalRange.maxPrice)
+                ? rideRequestDTO.getPrice()
+                : totalRange.recommendedPrice;
+
+        newRideOffer.setPrice(finalTotalPrice);
+
+        if (directDistance > 0) {
+            newRideOffer.setPricePerKm(finalTotalPrice / directDistance);
+        } else {
+            newRideOffer.setPricePerKm(0.0);
+        }
+
+        logger.info("Total Ride Pricing (Direct Distance ONLY): DirectDistance={}km, ActualRoute={}km, Min={}, Recommended={}, Max={}, Set={}",
+                directDistance, actualRouteDistance, totalRange.minPrice, totalRange.recommendedPrice, totalRange.maxPrice, finalTotalPrice);
+
+        // ===== SEGMENT PRICING: INDEPENDENT CALCULATION =====
+        List<Double> segmentPrices = new ArrayList<>();
+        List<String> segmentInfo = new ArrayList<>();
+
+        // Get segment distances from the actual route (with stopovers)
+        List<Double> segmentDistances = new ArrayList<>();
+        if (travelInfo.getSegmentDistances() != null && !travelInfo.getSegmentDistances().isEmpty()) {
+            segmentDistances.addAll(travelInfo.getSegmentDistances());
+        } else {
+            // Fallback: estimate proportionally based on direct distance
+            double perSegment = directDistance / numberOfSegments;
+            for (int i = 0; i < numberOfSegments; i++) {
+                segmentDistances.add(perSegment);
+            }
+        }
+
+        // Calculate price for each segment independently based on its OWN distance
+        for (int i = 0; i < numberOfSegments; i++) {
+            double segmentDist = segmentDistances.get(i);
+
+            // Get segment-specific pricing range based on SEGMENT DISTANCE ONLY
+            PricingService.PriceRange segmentRange = pricingService.getSegmentPriceRange(segmentDist);
+
+            double segmentPrice;
+            if (rideRequestDTO.getStopoverPrices() != null &&
+                    i < rideRequestDTO.getStopoverPrices().size()) {
+                // Use provided price, but clamp to segment range
+                double providedPrice = rideRequestDTO.getStopoverPrices().get(i);
+                segmentPrice = Math.max(segmentRange.minPrice,
+                        Math.min(segmentRange.maxPrice, providedPrice));
+                segmentPrice = Math.round(segmentPrice / 10.0) * 10.0;
+            } else {
+                // Use recommended price for this segment
+                segmentPrice = segmentRange.recommendedPrice;
+            }
+
+            segmentPrices.add(segmentPrice);
+            segmentInfo.add(String.format("Segment %d: %.0fkm, Range(%.0f-%.0f), Set=%.0f",
+                    i + 1, segmentDist, segmentRange.minPrice, segmentRange.maxPrice, segmentPrice));
+        }
+
+        newRideOffer.setStopoverPrices(segmentPrices);
+        segmentInfo.forEach(logger::info);
+
+        // Save ride
+        RideRequest savedRide = rideRequestRepository.save(newRideOffer);
+
+        // Notification
+        String message = "You offered a ride from " + savedRide.getOriginCity() +
+                " to " + savedRide.getDestinationCity();
+        notificationService.createNotification(requester, message, "/ride/" + savedRide.getId(),
+                "RIDE_OFFERED", savedRide.getId());
+
+        logger.info("Created Ride Offer ID: {}, Direct Distance: {}km, Actual Route: {}km, Total Price: {}, Segment Prices: {}",
+                savedRide.getId(), directDistance, actualRouteDistance, savedRide.getPrice(), savedRide.getStopoverPrices());
+
+        return savedRide;
+    }
     public RideRequest getRideById(Long rideId) {
         RideRequest ride = rideRequestRepository.findById(rideId)
                 .orElseThrow(() -> new RuntimeException("Ride not found with id: " + rideId));
@@ -60,7 +211,9 @@ public class RideRequestService {
         if (ride.getRequester() != null) {
             Double avgRating = ratingService.calculateAverageRating(ride.getRequester().getId());
             ride.getRequester().setAverageRating(avgRating);
+            ride.getParticipants().size();
         }
+        ride.getStopovers().size();
 
         return ride;
     }
@@ -79,12 +232,15 @@ public class RideRequestService {
                                 return false;
                             }
                         } catch (Exception e) {
-                            logger.warn("Invalid date format: {}", travelDateTime);
+                            logger.warn("Invalid date format during search: {}", travelDateTime);
                         }
                     }
 
                     if (passengerCount != null && passengerCount > 0) {
-                        int availableSeats = ride.getVehicleCapacity() - ride.getParticipants().size();
+                        int totalSeatsBooked = ride.getParticipants().stream()
+                                .mapToInt(p -> p.getNumberOfSeats() != null ? p.getNumberOfSeats() : 1)
+                                .sum();
+                        int availableSeats = ride.getVehicleCapacity() - totalSeatsBooked;
                         if (availableSeats < passengerCount) {
                             return false;
                         }
@@ -92,7 +248,9 @@ public class RideRequestService {
 
                     if (origin != null && !origin.trim().isEmpty() &&
                             destination != null && !destination.trim().isEmpty()) {
-                        return canAccommodateJourney(ride, origin, destination);
+                        if (!canAccommodateJourney(ride, origin, destination)) {
+                            return false;
+                        }
                     }
 
                     return true;
@@ -109,73 +267,53 @@ public class RideRequestService {
         return filteredRides;
     }
 
-    private boolean canAccommodateJourney(RideRequest ride, String origin, String destination) {
-        // Build the complete route with both city and point information
-        List<RoutePoint> fullPath = new ArrayList<>();
+    private boolean canAccommodateJourney(RideRequest ride, String searchOrigin, String searchDestination) {
+        List<RoutePoint> fullPath = buildFullPath(ride);
 
-        // Add origin
-        fullPath.add(new RoutePoint(ride.getOriginCity(), ride.getOrigin()));
-
-        // Add all stopovers
-        if (ride.getStopovers() != null) {
-            for (Stopover stopover : ride.getStopovers()) {
-                fullPath.add(new RoutePoint(stopover.getCity(), stopover.getPoint()));
-            }
-        }
-
-        // Add destination
-        fullPath.add(new RoutePoint(ride.getDestinationCity(), ride.getDestination()));
-
-        // LOG THE FULL PATH
-        logger.info("=== Checking ride ID: {} ===", ride.getId());
-        logger.info("Full route path:");
-        for (int i = 0; i < fullPath.size(); i++) {
-            logger.info("  [{}] City: '{}', Point: '{}'", i, fullPath.get(i).getCity(), fullPath.get(i).getPoint());
-        }
-        logger.info("Searching for journey: '{}' -> '{}'", origin, destination);
+        logger.debug("=== Checking Ride ID: {} for Journey: '{}' -> '{}' ===", ride.getId(), searchOrigin, searchDestination);
+        fullPath.forEach(p -> logger.debug("  Route Point: City='{}', Point='{}'", p.getCity(), p.getPoint()));
 
         int originIndex = -1;
         int destinationIndex = -1;
 
-        // Find the FIRST occurrence of origin
         for (int i = 0; i < fullPath.size(); i++) {
-            if (matchesLocation(fullPath.get(i), origin)) {
+            if (matchesLocation(fullPath.get(i), searchOrigin)) {
                 originIndex = i;
-                logger.info("✓ Found origin '{}' at index {}", origin, i);
+                logger.debug("  Origin found at index {}", i);
                 break;
             }
         }
 
-        // If origin not found, return false
         if (originIndex == -1) {
-            logger.info("✗ Origin '{}' NOT FOUND in route", origin);
+            logger.debug("  Origin not found in route.");
             return false;
         }
 
-        // Find the FIRST occurrence of destination AFTER the origin
         for (int i = originIndex + 1; i < fullPath.size(); i++) {
-            if (matchesLocation(fullPath.get(i), destination)) {
+            if (matchesLocation(fullPath.get(i), searchDestination)) {
                 destinationIndex = i;
-                logger.info("✓ Found destination '{}' at index {}", destination, i);
+                logger.debug("  Destination found at index {}", i);
                 break;
             }
         }
 
-        if (destinationIndex == -1) {
-            logger.info("✗ Destination '{}' NOT FOUND after origin", destination);
-        }
-
-        boolean result = originIndex != -1 && destinationIndex != -1 && destinationIndex > originIndex;
-        logger.info("=== Journey possible: {} ===\n", result);
-        return result;
+        boolean possible = destinationIndex != -1;
+        logger.debug("=== Journey Possible: {} ===\n", possible);
+        return possible;
     }
 
-    /**
-     * Helper method to check if a route point matches a search location.
-     * Uses flexible matching to handle variations in location naming.
-     */
+    private List<RoutePoint> buildFullPath(RideRequest ride) {
+        List<RoutePoint> fullPath = new ArrayList<>();
+        fullPath.add(new RoutePoint(ride.getOriginCity(), ride.getOrigin()));
+        if (ride.getStopovers() != null) {
+            ride.getStopovers().forEach(stop -> fullPath.add(new RoutePoint(stop.getCity(), stop.getPoint())));
+        }
+        fullPath.add(new RoutePoint(ride.getDestinationCity(), ride.getDestination()));
+        return fullPath;
+    }
+
     private boolean matchesLocation(RoutePoint routePoint, String searchLocation) {
-        if (searchLocation == null || searchLocation.trim().isEmpty()) {
+        if (searchLocation == null || searchLocation.trim().isEmpty() || routePoint == null) {
             return false;
         }
 
@@ -183,112 +321,182 @@ public class RideRequestService {
         String cityLower = normalizeLocation(routePoint.getCity());
         String pointLower = normalizeLocation(routePoint.getPoint());
 
-        logger.debug("  Comparing search='{}' with city='{}', point='{}'", searchLower, cityLower, pointLower);
+        logger.trace("  Comparing search='{}' with city='{}', point='{}'", searchLower, cityLower, pointLower);
 
-        // Try exact match first
-        if (cityLower.equals(searchLower) || pointLower.equals(searchLower)) {
-            logger.debug("  -> EXACT match found");
-            return true;
+        if (!pointLower.isEmpty()) {
+            if (pointLower.equals(searchLower)) return true;
+            if (pointLower.contains(searchLower)) return true;
+            if (searchLower.contains(pointLower)) return true;
         }
 
-        // Check if search term is contained in city or point
-        if (cityLower.contains(searchLower) || pointLower.contains(searchLower)) {
-            logger.debug("  -> PARTIAL match found (search in location)");
-            return true;
+        if (!cityLower.isEmpty()) {
+            if (cityLower.equals(searchLower)) return true;
+            if (cityLower.contains(searchLower) && searchLower.length() > 2) return true;
+            if (searchLower.contains(cityLower) && cityLower.length() > 2) return true;
         }
 
-        // Check if city or point is contained in search term
-        if (!cityLower.isEmpty() && searchLower.contains(cityLower)) {
-            logger.debug("  -> PARTIAL match found (location in search)");
-            return true;
-        }
-
-        // Extract main city names and compare (handles "Mumbai, Maharashtra, India" vs "Mumbai")
         String searchMainCity = extractMainCity(searchLocation);
         String cityMainCity = extractMainCity(routePoint.getCity());
         String pointMainCity = extractMainCity(routePoint.getPoint());
 
-        if (searchMainCity.length() >= 3) {
-            if (cityMainCity.equals(searchMainCity) || pointMainCity.contains(searchMainCity) ||
-                    cityMainCity.contains(searchMainCity) || searchMainCity.contains(cityMainCity)) {
-                logger.debug("  -> MAIN CITY match found: search='{}', city='{}', point='{}'",
-                        searchMainCity, cityMainCity, pointMainCity);
-                return true;
-            }
+        if (!searchMainCity.isEmpty() && searchMainCity.length() >= 3) {
+            if (!cityMainCity.isEmpty() && cityMainCity.contains(searchMainCity)) return true;
+            if (!pointMainCity.isEmpty() && pointMainCity.contains(searchMainCity)) return true;
+            if (!cityMainCity.isEmpty() && searchMainCity.contains(cityMainCity)) return true;
         }
 
-        logger.debug("  -> NO match");
         return false;
     }
 
-    /**
-     * Normalizes a location string for comparison
-     */
     private String normalizeLocation(String location) {
         if (location == null) return "";
         return location.toLowerCase()
                 .trim()
-                .replaceAll("\\s+", " ");
+                .replaceAll("\\s+", " ")
+                .replace(", india", "")
+                .replace(", maharashtra", "")
+                .replace(", tamil nadu", "")
+                .replace(", andhra pradesh", "");
     }
 
-    /**
-     * Extracts the main city name from a full address
-     * E.g., "Mumbai, Maharashtra, India" -> "mumbai"
-     * E.g., "IIT Bombay, Main Gate Road, Mumbai" -> "mumbai"
-     */
     private String extractMainCity(String location) {
         if (location == null || location.isEmpty()) return "";
-
         String normalized = normalizeLocation(location);
-
-        // Common patterns: "City, State, Country" or "Place, City, State"
-        // We want to extract the main city name
-
-        // Split by comma and clean each part
         String[] parts = normalized.split(",");
-
-        // Look for recognizable city names in the parts
-        for (String part : parts) {
-            part = part.trim();
-
-            // Skip very short parts
-            if (part.length() < 3) continue;
-
-            // Skip common state/country names
-            if (part.equals("india") || part.equals("andhra pradesh") ||
-                    part.equals("tamil nadu") || part.equals("maharashtra") ||
-                    part.equals("kerala")) {
-                continue;
-            }
-
-            // If we find a part that contains a known city name, extract it
-            if (part.contains("mumbai")) return "mumbai";
-            if (part.contains("chennai")) return "chennai";
-            if (part.contains("tirupati")) return "tirupati";
-            if (part.contains("kerala")) return "kerala";
-            if (part.contains("bangalore")) return "bangalore";
-            if (part.contains("hyderabad")) return "hyderabad";
-            if (part.contains("delhi")) return "delhi";
-            if (part.contains("kolkata")) return "kolkata";
-        }
-
-        // If no known city found, return the first substantial part
-        for (String part : parts) {
-            part = part.trim();
-            if (part.length() >= 3 &&
-                    !part.equals("india") &&
-                    !part.startsWith("iit") &&
-                    !part.contains("institute")) {
-                return part;
-            }
-        }
-
-        return normalized;
+        return (parts.length > 0 && parts[0].trim().length() >= 3) ? parts[0].trim() : normalized;
     }
 
-    /**
-     * Inner class to hold route point information
-     */
+    @Transactional
+    public void deleteRide(Long rideId, String userEmail) {
+        RideRequest ride = rideRequestRepository.findById(rideId)
+                .orElseThrow(() -> new RuntimeException("Ride not found with id: " + rideId));
+        Employee user = employeeRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + userEmail));
+
+        if (!Objects.equals(ride.getRequester().getId(), user.getId())) {
+            throw new IllegalStateException("You are not authorized to delete this ride.");
+        }
+
+        ride.getParticipants().forEach(participant -> {
+            String message = "Your ride from " + ride.getOriginCity() + " to " + ride.getDestinationCity() + " has been canceled by the driver.";
+            notificationService.createNotification(participant.getParticipant(), message, "/dashboard", "RIDE_CANCELED", ride.getId());
+        });
+
+        ratingService.deleteAllRatingsForRide(ride);
+        logger.info("User {} authorized. Deleting ride ID: {}", userEmail, rideId);
+        rideRequestRepository.delete(ride);
+    }
+
+    @Transactional
+    public RideParticipant joinRideRequest(Long rideId, String participantEmail, Map<String, Object> segmentDetails) {
+        RideRequest rideRequest = rideRequestRepository.findById(rideId)
+                .orElseThrow(() -> new RuntimeException("Ride not found with id: " + rideId));
+        Employee participant = employeeRepository.findByEmail(participantEmail)
+                .orElseThrow(() -> new RuntimeException("Employee not found with email: " + participantEmail));
+
+        String pickupPoint = (String) segmentDetails.get("pickupPoint");
+        String dropoffPoint = (String) segmentDetails.get("dropoffPoint");
+        Double price = ((Number) segmentDetails.get("price")).doubleValue();
+        Integer numberOfSeats = 1;
+        if (segmentDetails.containsKey("numberOfSeats")) {
+            try {
+                numberOfSeats = ((Number) segmentDetails.get("numberOfSeats")).intValue();
+            } catch (Exception e) {
+                logger.warn("Invalid numberOfSeats format, defaulting to 1.");
+            }
+        }
+
+        if (pickupPoint == null || pickupPoint.trim().isEmpty() ||
+                dropoffPoint == null || dropoffPoint.trim().isEmpty() ||
+                price == null || numberOfSeats < 1) {
+            throw new IllegalArgumentException("Pickup point, drop-off point, valid price, and number of seats must be provided.");
+        }
+
+        List<RoutePoint> fullPath = buildFullPath(rideRequest);
+        int pickupIndex = -1;
+        int dropoffIndex = -1;
+        for(int i=0; i<fullPath.size(); i++) {
+            if(pickupIndex == -1 && matchesLocation(fullPath.get(i), pickupPoint)) pickupIndex = i;
+            if(pickupIndex != -1 && matchesLocation(fullPath.get(i), dropoffPoint)) {
+                dropoffIndex = i;
+                break;
+            }
+        }
+
+        if (pickupIndex == -1 || dropoffIndex == -1) throw new IllegalStateException("Invalid pickup or drop-off point. Must match the route.");
+        if (pickupIndex >= dropoffIndex) throw new IllegalStateException("Pickup point must be before drop-off point.");
+        if (!"OFFERED".equalsIgnoreCase(rideRequest.getRideType())) throw new IllegalStateException("You can only join offered rides.");
+        if ("FEMALE_ONLY".equalsIgnoreCase(rideRequest.getGenderPreference()) && !"FEMALE".equalsIgnoreCase(participant.getGender())) throw new IllegalStateException("This ride is for female participants only.");
+
+        int totalSeatsBooked = rideRequest.getParticipants().stream()
+                .mapToInt(p -> p.getNumberOfSeats() != null ? p.getNumberOfSeats() : 1)
+                .sum();
+        if (rideRequest.getVehicleCapacity() - totalSeatsBooked < numberOfSeats) {
+            throw new IllegalStateException("Not enough seats available. Only " + (rideRequest.getVehicleCapacity() - totalSeatsBooked) + " seat(s) left.");
+        }
+
+        if (Objects.equals(rideRequest.getRequester().getId(), participant.getId())) throw new IllegalStateException("You cannot join your own ride.");
+        if (rideParticipantRepository.existsByRideRequestAndParticipant(rideRequest, participant)) throw new IllegalStateException("You have already joined this ride.");
+
+        RideParticipant rideParticipant = new RideParticipant();
+        rideParticipant.setRideRequest(rideRequest);
+        rideParticipant.setParticipant(participant);
+        rideParticipant.setPickupPoint(fullPath.get(pickupIndex).getPoint());
+        rideParticipant.setDropoffPoint(fullPath.get(dropoffIndex).getPoint());
+        rideParticipant.setPrice(price);
+        rideParticipant.setNumberOfSeats(numberOfSeats);
+
+        RideParticipant savedParticipant = rideParticipantRepository.save(rideParticipant);
+
+        String seatText = numberOfSeats > 1 ? numberOfSeats + " seats" : "1 seat";
+        String driverMessage = participant.getName() + " booked " + seatText + " on your ride: " +
+                rideRequest.getOriginCity() + " -> " + rideRequest.getDestinationCity() +
+                " (Segment: " + extractMainCity(pickupPoint) + " -> " + extractMainCity(dropoffPoint) + ")";
+        notificationService.createNotification(rideRequest.getRequester(), driverMessage, "/ride/" + rideId, "RIDE_JOINED", rideId);
+
+        String participantMessage = "Booking confirmed for " + seatText + ": " +
+                rideRequest.getOriginCity() + " -> " + rideRequest.getDestinationCity() +
+                " (Your segment: " + extractMainCity(pickupPoint) + " -> " + extractMainCity(dropoffPoint) + ")";
+        notificationService.createNotification(participant, participantMessage, "/ride/" + rideId, "RIDE_BOOKED", rideId);
+
+        return savedParticipant;
+    }
+
+    public List<RideRequest> getRidesForUser(String userEmail) {
+        Employee employee = employeeRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + userEmail));
+        Long userId = employee.getId();
+
+        logger.info("Fetching rides for user: {} (ID: {})", userEmail, userId);
+
+        List<RideRequest> userRides = rideRequestRepository.findAll().stream()
+                .filter(ride -> {
+                    boolean isRequester = ride.getRequester() != null && ride.getRequester().getId().equals(userId);
+                    boolean isParticipant = ride.getParticipants() != null && ride.getParticipants().stream()
+                            .anyMatch(p -> p.getParticipant() != null && p.getParticipant().getId().equals(userId));
+
+                    if(isRequester || isParticipant) {
+                        logger.trace("  Ride ID {}: {} -> {} | {} | Role: {}",
+                                ride.getId(), ride.getOriginCity(), ride.getDestinationCity(), ride.getTravelDateTime(), (isRequester ? "DRIVER" : "PASSENGER"));
+                    }
+                    return isRequester || isParticipant;
+                })
+                .collect(Collectors.toList());
+
+        logger.info("Total rides found for user {}: {}", userEmail, userRides.size());
+
+        userRides.forEach(ride -> {
+            if (ride.getRequester() != null) {
+                Double avgRating = ratingService.calculateAverageRating(ride.getRequester().getId());
+                ride.getRequester().setAverageRating(avgRating);
+            }
+            ride.getParticipants().size();
+            ride.getStopovers().size();
+        });
+
+        return userRides;
+    }
+
     private static class RoutePoint {
         private final String city;
         private final String point;
@@ -298,225 +506,10 @@ public class RideRequestService {
             this.point = point;
         }
 
-        public String getCity() {
-            return city;
-        }
-
-        public String getPoint() {
-            return point;
-        }
+        public String getCity() { return city; }
+        public String getPoint() { return point; }
 
         @Override
-        public String toString() {
-            return "RoutePoint{city='" + city + "', point='" + point + "'}";
-        }
-    }
-    @Transactional
-    public RideRequest createRideOffer(RideRequestDTO rideRequestDTO, String requesterEmail) {
-        Employee requester = employeeRepository.findByEmail(requesterEmail)
-                .orElseThrow(() -> new RuntimeException("Employee not found with email: " + requesterEmail));
-
-        RideRequest newRideOffer = new RideRequest();
-        newRideOffer.setOriginCity(rideRequestDTO.getOriginCity());
-        newRideOffer.setOrigin(rideRequestDTO.getOrigin());
-        newRideOffer.setDestinationCity(rideRequestDTO.getDestinationCity());
-        newRideOffer.setDestination(rideRequestDTO.getDestination());
-        newRideOffer.setTravelDateTime(rideRequestDTO.getTravelDateTime());
-        newRideOffer.setStatus("PENDING");
-        newRideOffer.setRequester(requester);
-        newRideOffer.setRideType("OFFERED");
-        newRideOffer.setVehicleModel(rideRequestDTO.getVehicleModel());
-        newRideOffer.setVehicleCapacity(rideRequestDTO.getVehicleCapacity());
-        newRideOffer.setGenderPreference(rideRequestDTO.getGenderPreference());
-        newRideOffer.setPrice(rideRequestDTO.getPrice());
-        newRideOffer.setDriverNote(rideRequestDTO.getDriverNote());
-        newRideOffer.setStopoverPrices(rideRequestDTO.getStopoverPrices());
-
-        if (rideRequestDTO.getStops() != null) {
-            List<Stopover> stopoverEntities = rideRequestDTO.getStops().stream()
-                    .map(dto -> {
-                        Stopover stopover = new Stopover();
-                        stopover.setCity(dto.getCity());
-                        stopover.setPoint(dto.getPoint());
-                        stopover.setRideRequest(newRideOffer);
-
-                        // NEW: Geocode the stop point
-                        try {
-                            LatLng location = googleMapsService.geocodeAddress(dto.getPoint());
-                            if (location != null) {
-                                stopover.setLat(location.lat);
-                                stopover.setLng(location.lng);
-                            }
-                        } catch (Exception e) {
-                            logger.error("Could not geocode stopover point: {}", dto.getPoint(), e);
-                        }
-
-                        return stopover;
-                    })
-                    .collect(Collectors.toList());
-            newRideOffer.setStopovers(stopoverEntities);
-        }
-
-        String[] stopsArray = (rideRequestDTO.getStops() != null)
-                ? rideRequestDTO.getStops().stream().map(StopoverDto::getPoint).toArray(String[]::new)
-                : new String[0];
-
-        TravelInfo travelInfo = googleMapsService.getTravelInfo(rideRequestDTO.getOrigin(), rideRequestDTO.getDestination(), stopsArray);
-
-        newRideOffer.setDuration(travelInfo.getDurationInMinutes());
-        newRideOffer.setDistance(travelInfo.getDistanceInKm());
-        newRideOffer.setRoutePolyline(travelInfo.getPolyline());
-
-        if (travelInfo.getDistanceInKm() > 0 && rideRequestDTO.getPrice() != null && rideRequestDTO.getPrice() > 0) {
-            newRideOffer.setPricePerKm(rideRequestDTO.getPrice() / travelInfo.getDistanceInKm());
-        } else {
-            newRideOffer.setPricePerKm(0.0);
-        }
-
-        RideRequest savedRide = rideRequestRepository.save(newRideOffer);
-
-        // Create notification
-        String message = "You offered a ride from " + savedRide.getOriginCity() + " to " + savedRide.getDestinationCity();
-        notificationService.createNotification(requester, message, "/ride/" + savedRide.getId(), "RIDE_OFFERED", savedRide.getId());
-
-        return savedRide;
-    }
-
-    @Transactional
-    public void deleteRide(Long rideId, String userEmail) {
-        RideRequest ride = rideRequestRepository.findById(rideId)
-                .orElseThrow(() -> new RuntimeException("Ride not found with id: " + rideId));
-
-        Employee user = employeeRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + userEmail));
-
-        if (!Objects.equals(ride.getRequester().getId(), user.getId())) {
-            throw new IllegalStateException("You are not authorized to delete this ride.");
-        }
-
-        // Notify all participants that the ride has been canceled
-        ride.getParticipants().forEach(participant -> {
-            String message = "Your ride from " + ride.getOriginCity() + " to " + ride.getDestinationCity() + " has been canceled.";
-            notificationService.createNotification(participant.getParticipant(), message, "/dashboard", "RIDE_CANCELED", ride.getId());
-        });
-
-
-        logger.info("Authorization successful. Deleting ride ID: {}", rideId);
-        rideRequestRepository.delete(ride);
-    }
-
-    @Transactional
-    public RideParticipant joinRideRequest(Long rideId, String participantEmail, Map<String, Object> segmentDetails) {
-        RideRequest rideRequest = rideRequestRepository.findById(rideId)
-                .orElseThrow(() -> new RuntimeException("Ride not found with id: " + rideId));
-
-        Employee participant = employeeRepository.findByEmail(participantEmail)
-                .orElseThrow(() -> new RuntimeException("Employee not found with email: " + participantEmail));
-
-        String pickupPoint = (String) segmentDetails.get("pickupPoint");
-        String dropoffPoint = (String) segmentDetails.get("dropoffPoint");
-        Double price = ((Number) segmentDetails.get("price")).doubleValue();
-        // MODIFIED CHECK for robustness
-        if (pickupPoint == null || pickupPoint.trim().isEmpty() ||
-                dropoffPoint == null || dropoffPoint.trim().isEmpty() ||
-                price == null) {
-            throw new IllegalStateException("Pickup point, drop-off point, and price must be provided.");
-        }
-
-        // EXTRACT numberOfSeats from segmentDetails
-        Integer numberOfSeats = 1; // Default to 1
-        if (segmentDetails.containsKey("numberOfSeats")) {
-            numberOfSeats = ((Number) segmentDetails.get("numberOfSeats")).intValue();
-        }
-
-        if (pickupPoint == null || dropoffPoint == null || price == null) {
-            throw new IllegalStateException("Pickup point, drop-off point, and price must be provided.");
-        }
-
-        List<String> fullRoute = new ArrayList<>();
-        fullRoute.add(rideRequest.getOrigin());
-        if (rideRequest.getStopovers() != null) {
-            fullRoute.addAll(rideRequest.getStopovers().stream().map(Stopover::getPoint).collect(Collectors.toList()));
-        }
-        fullRoute.add(rideRequest.getDestination());
-
-        int pickupIndex = fullRoute.indexOf(pickupPoint);
-        int dropoffIndex = fullRoute.indexOf(dropoffPoint);
-
-        if (pickupIndex == -1 || dropoffIndex == -1) {
-            throw new IllegalStateException("Invalid pickup or drop-off point. Must be part of the route.");
-        }
-
-        if (pickupIndex >= dropoffIndex) {
-            throw new IllegalStateException("Pickup point must be before drop-off point.");
-        }
-
-        if (!"OFFERED".equalsIgnoreCase(rideRequest.getRideType())) {
-            throw new IllegalStateException("You can only join offered rides.");
-        }
-
-        if ("FEMALE_ONLY".equalsIgnoreCase(rideRequest.getGenderPreference()) &&
-                !"FEMALE".equalsIgnoreCase(participant.getGender())) {
-            throw new IllegalStateException("This ride is for female participants only.");
-        }
-
-        // UPDATED: Calculate total seats booked to check capacity
-        int totalSeatsBooked = rideRequest.getParticipants().stream()
-                .mapToInt(p -> p.getNumberOfSeats() != null ? p.getNumberOfSeats() : 1)
-                .sum();
-
-        // Check if there's enough capacity for the requested seats
-        if (rideRequest.getVehicleCapacity() - totalSeatsBooked < numberOfSeats) {
-            throw new IllegalStateException("Not enough seats available. Only " +
-                    (rideRequest.getVehicleCapacity() - totalSeatsBooked) + " seat(s) left.");
-        }
-
-        if (rideRequest.getRequester().equals(participant)) {
-            throw new IllegalStateException("You cannot join a ride that you posted.");
-        }
-
-        if (rideParticipantRepository.existsByRideRequestAndParticipant(rideRequest, participant)) {
-            throw new IllegalStateException("You have already joined this ride.");
-        }
-
-        RideParticipant rideParticipant = new RideParticipant();
-        rideParticipant.setRideRequest(rideRequest);
-        rideParticipant.setParticipant(participant);
-        rideParticipant.setPickupPoint(pickupPoint);
-        rideParticipant.setDropoffPoint(dropoffPoint);
-        rideParticipant.setPrice(price);
-        rideParticipant.setNumberOfSeats(numberOfSeats); // SET THE NUMBER OF SEATS
-
-        RideParticipant savedParticipant = rideParticipantRepository.save(rideParticipant);
-
-        // Notify the ride creator
-        String seatText = numberOfSeats > 1 ? numberOfSeats + " seats" : "1 seat";
-        String message = participant.getName() + " has booked " + seatText + " for your ride from " +
-                rideRequest.getOriginCity() + " to " + rideRequest.getDestinationCity();
-        notificationService.createNotification(rideRequest.getRequester(), message, "/ride/" + rideId, "RIDE_JOINED", rideId);
-
-        // Notify the participant
-        String participantMessage = "You have booked " + seatText + " for a ride from " +
-                rideRequest.getOriginCity() + " to " + rideRequest.getDestinationCity();
-        notificationService.createNotification(participant, participantMessage, "/ride/" + rideId, "RIDE_JOINED", rideId);
-
-        return savedParticipant;
-    }
-
-    public List<RideRequest> getRidesForUser(String userEmail) {
-        Employee employee = employeeRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        List<RideRequest> userRides = rideRequestRepository.findAll().stream()
-                .filter(ride -> ride.getRequester().equals(employee) ||
-                        (ride.getParticipants() != null && ride.getParticipants().stream()
-                                .anyMatch(p -> p.getParticipant().equals(employee))))
-                .collect(Collectors.toList());
-        for (RideRequest ride : userRides) {
-            if (ride.getRequester() != null) {
-                Double avgRating = ratingService.calculateAverageRating(ride.getRequester().getId());
-                ride.getRequester().setAverageRating(avgRating);
-            }
-        }
-        return userRides;
+        public String toString() { return "RoutePoint{city='" + city + "', point='" + point + "'}"; }
     }
 }
