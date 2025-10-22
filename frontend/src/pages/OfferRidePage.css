@@ -4,186 +4,406 @@
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  background-color: var(--background-color);
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(236, 72, 153, 0.05) 0%, transparent 50%),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 60px,
+      rgba(255, 255, 255, 0.01) 60px,
+      rgba(255, 255, 255, 0.01) 120px
+    ),
+    var(--background-color);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background elements */
+.offer-ride-page-container::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 5%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.offer-ride-page-container::after {
+  content: '';
+  position: absolute;
+  bottom: 15%;
+  right: 10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(50px);
+  animation: float 25s ease-in-out infinite reverse;
+  pointer-events: none;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
 }
 
 .form-card-container {
   width: 100%;
   max-width: 550px;
   position: relative;
+  z-index: 1;
 }
 
 .progress-bar {
   display: flex;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .progress-step {
   flex: 1;
-  height: 6px;
-  background-color: #333;
-  border-radius: 3px;
-  transition: background-color 0.4s ease;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
 }
 
 .progress-step.active {
-  background-color: var(--primary-color);
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
 }
 
 .form-card {
-  background: #111111;
-  border-radius: 24px;
-  padding: 40px;
-  border: 1px solid #222222;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  background: rgba(17, 17, 17, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 32px;
+  padding: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.form-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .step-content {
-  animation: fadeIn 0.5s ease-out;
+  animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 2;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
 }
 
 .form-card h2 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
   text-align: center;
-  margin: 0 0 32px 0;
+  margin: 0 0 12px 0;
   color: var(--text-primary);
+  background: linear-gradient(135deg, #ffffff 0%, #c0c0c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.form-card p {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .form-field {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .form-field label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   padding-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+.form-field label svg {
+  color: #3b82f6;
+}
+
+.form-field:hover label {
+  color: var(--text-primary);
+}
+
+.custom-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(34, 34, 34, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.custom-input:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(34, 34, 34, 0.8);
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(34, 34, 34, 0.9);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.custom-input::placeholder {
+  color: rgba(136, 136, 136, 0.6);
 }
 
 .form-actions {
-  margin-top: 32px;
-  border-top: 1px solid #222;
-  padding-top: 24px;
+  margin-top: 36px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
+.custom-button {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.custom-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5);
+}
+
+.custom-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.custom-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.custom-button.secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+.custom-button.secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Stop Input Group */
 .stop-input-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  background: rgba(34, 34, 34, 0.4);
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
 }
 
 .remove-stop-btn {
-    background: transparent;
-    border: none;
-    color: #ef4444;
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-top: 28px;
 }
 
 .remove-stop-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    transform: scale(1.1);
+  background: rgba(239, 68, 68, 0.15);
+  transform: scale(1.1) rotate(90deg);
 }
 
 .add-stopover-btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px dashed var(--surface-color-light);
-    background: transparent;
-    color: var(--text-secondary);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 24px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1.5px dashed rgba(59, 130, 246, 0.4);
+  background: rgba(59, 130, 246, 0.05);
+  color: #3b82f6;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
 }
 
 .add-stopover-btn:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
 }
 
+/* Passenger Counter */
 .passenger-counter-container {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 30px 0;
+  padding: 40px 0;
 }
 
 .count-btn {
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  border: 2px solid var(--surface-color-light);
-  background-color: var(--surface-color);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(34, 34, 34, 0.6);
   color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   font-size: 1.5rem;
+  backdrop-filter: blur(10px);
 }
 
 .count-btn:hover:not(:disabled) {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #000;
-  transform: scale(1.1);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-color: #3b82f6;
+  color: white;
+  transform: scale(1.15) rotateZ(-10deg);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
 .count-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
 .count-display {
-  font-size: 5rem;
+  font-size: 5.5rem;
   font-weight: 700;
   color: var(--text-primary);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: pulse 2s ease-in-out infinite;
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Custom Textarea */
 .custom-textarea {
-    width: 100%;
-    padding: 12px;
-    background: var(--surface-color);
-    border: 1px solid var(--surface-color-light);
-    border-radius: 10px;
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 1rem;
-    resize: vertical;
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(34, 34, 34, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  resize: vertical;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  min-height: 100px;
 }
 
-/* Custom Date Picker Styles */
+.custom-textarea:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(34, 34, 34, 0.8);
+}
+
+.custom-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(34, 34, 34, 0.9);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Custom Date Picker */
 .custom-date-picker-container {
-  background: var(--surface-color);
-  border: 1px solid var(--surface-color-light);
-  border-radius: 12px;
-  padding: 24px;
+  background: rgba(34, 34, 34, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px;
   margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
 .calendar-header {
@@ -196,24 +416,27 @@
 .calendar-nav-btn {
   background: transparent;
   border: none;
-  color: var(--primary-color);
+  color: #3b82f6;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  border-radius: 8px;
 }
 
 .calendar-nav-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
   transform: scale(1.2);
+  color: #8b5cf6;
 }
 
 .calendar-month-year {
   text-align: center;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: var(--text-primary);
   min-width: 150px;
 }
@@ -228,9 +451,11 @@
 .weekday {
   text-align: center;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-secondary);
   padding: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .calendar-days {
@@ -244,57 +469,66 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  background: var(--background-color);
+  border-radius: 10px;
+  background: rgba(34, 34, 34, 0.4);
   color: var(--text-primary);
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 0.9rem;
   font-weight: 500;
 }
 
 .calendar-day:hover:not(.disabled):not(.empty) {
-  background: var(--surface-color-light);
-  transform: scale(1.05);
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  transform: scale(1.08);
 }
 
 .calendar-day.selected {
-  background: var(--primary-color);
-  color: #000;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
   font-weight: 700;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
 .calendar-day.disabled,
 .calendar-day.empty {
   color: var(--text-secondary);
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
+  background: transparent;
+  border-color: transparent;
 }
 
-/* Custom Time Picker Styles */
+/* Custom Time Picker */
 .custom-time-picker-container {
-  background: var(--surface-color);
-  border: 1px solid var(--surface-color-light);
-  border-radius: 12px;
-  padding: 24px;
+  background: rgba(34, 34, 34, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px;
   margin-bottom: 20px;
+  backdrop-filter: blur(10px);
 }
 
 .time-picker-display {
   text-align: center;
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 700;
-  color: var(--primary-color);
-  margin-bottom: 24px;
-  letter-spacing: 2px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 28px;
+  letter-spacing: 4px;
+  font-family: 'Courier New', monospace;
 }
 
 .time-picker-inputs {
   display: flex;
   justify-content: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 20px;
+  margin-bottom: 28px;
 }
 
 .time-input-group {
@@ -304,88 +538,52 @@
   gap: 12px;
 }
 
-.time-up-btn {
-  width: 40px;
-  height: 40px;
+.time-up-btn,
+.time-down-btn {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: 1px solid var(--surface-color-light);
-  background: var(--background-color);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(34, 34, 34, 0.6);
   color: var(--text-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
-.time-up-btn:hover {
-  background: var(--surface-color-light);
+.time-up-btn:hover,
+.time-down-btn:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-color: #3b82f6;
+  color: white;
   transform: scale(1.1);
 }
 
 .time-display {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
-  width: 50px;
+  width: 70px;
   text-align: center;
+  font-family: 'Courier New', monospace;
 }
 
-.time-down-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--surface-color-light);
-  background: var(--background-color);
-  color: var(--text-primary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.time-down-btn:hover {
-  background: var(--surface-color-light);
-  transform: scale(1.1);
-}
-
-.time-period-selector {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.period-btn {
-  flex: 1;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--surface-color-light);
-  background: var(--background-color);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 600;
-}
-
-.period-btn.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #000;
-}
-
-/* Price Slider Styles */
+/* Price Slider */
 .price-slider-container {
-  background-color: var(--surface-color);
-  border: 1px solid var(--surface-color-light);
-  border-radius: 12px;
-  padding: 24px;
+  background: rgba(34, 34, 34, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px;
   margin-bottom: 24px;
+  backdrop-filter: blur(10px);
 }
 
 .price-display-box {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .price-label {
@@ -393,42 +591,56 @@
   color: var(--text-secondary);
   font-weight: 500;
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .price-value {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 700;
-  color: var(--primary-color);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   display: block;
-  line-height: 1.1;
-  margin-bottom: 12px;
+  line-height: 1;
+  margin-bottom: 16px;
 }
 
 .recommendation-pills {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .pill {
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
   color: var(--text-primary);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
-.pill.low, .pill.high {
-  background-color: var(--surface-color-light);
+.pill.low,
+.pill.high {
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .pill.recommended {
-  background-color: rgba(52, 211, 153, 0.1);
+  background: rgba(52, 211, 153, 0.2);
   color: #34d399;
-  border: 1px solid rgba(52, 211, 153, 0.2);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+}
+
+.pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .slider-control-group {
@@ -438,23 +650,26 @@
 }
 
 .control-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: 1px solid var(--surface-color-light);
-  background-color: var(--background-color);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(34, 34, 34, 0.6);
   color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   flex-shrink: 0;
+  backdrop-filter: blur(10px);
 }
 
 .control-btn:hover {
-  background-color: var(--surface-color-light);
-  transform: scale(1.1);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-color: #3b82f6;
+  color: white;
+  transform: scale(1.15);
 }
 
 .price-slider {
@@ -463,7 +678,7 @@
   appearance: none;
   width: 100%;
   height: 6px;
-  background: var(--surface-color-light);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
   border-radius: 3px;
   outline: none;
 }
@@ -471,209 +686,219 @@
 .price-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
-  background: var(--primary-color);
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   border-radius: 50%;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .price-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+  transform: scale(1.3);
+  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.6);
 }
 
 .price-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  background: var(--primary-color);
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   border-radius: 50%;
   cursor: pointer;
-  border: none;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
-/* Stopover Pricing Styles */
+/* Stopover Pricing */
 .stopover-pricing-row {
-    text-align: center;
-    margin-bottom: 24px;
-    padding: 16px;
-    background: rgba(52, 211, 153, 0.05);
-    border-radius: 12px;
-    border: 1px solid rgba(52, 211, 153, 0.2);
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(52, 211, 153, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 .link-button {
-    background: none;
-    border: none;
-    color: var(--primary-color);
-    text-decoration: underline;
-    cursor: pointer;
-    font-weight: 600;
-    transition: opacity 0.2s;
+  background: none;
+  border: none;
+  color: #34d399;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .link-button:hover {
-    opacity: 0.8;
+  opacity: 0.8;
+  text-decoration-thickness: 2px;
 }
 
-/* Modal for Stopover Pricing */
+/* Modal */
 .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(5px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
 .modal-card {
-    background: var(--surface-color);
-    border-radius: 16px;
-    padding: 32px;
-    width: 90%;
-    max-width: 500px;
-    border: 1px solid var(--surface-color-light);
-    position: relative;
-    max-height: 90vh;
-    overflow-y: auto;
+  background: rgba(17, 17, 17, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 32px;
+  width: 90%;
+  max-width: 500px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .modal-close {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .modal-close:hover {
-    color: var(--text-primary);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.15);
+  transform: rotate(90deg);
 }
 
 .modal-card h2 {
-    font-size: 1.5rem;
-    text-align: center;
-    margin-bottom: 24px;
+  font-size: 1.5rem;
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--text-primary);
 }
 
 .modal-body {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .stop-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: rgba(34, 34, 34, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .stop-info {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-
-.stop-dot-line {
-    width: 2px;
-    height: 40px;
-    background: var(--surface-color-light);
-    position: relative;
-}
-.stop-dot-line::before, .stop-dot-line::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--text-secondary);
-}
-.stop-dot-line::before { top: -4px; }
-.stop-dot-line::after { bottom: -4px; }
 
 .stop-names {
-    display: flex;
-    flex-direction: column;
-    font-weight: 600;
-}
-.stop-names span:last-child {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .stop-price-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .circle-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--surface-color-light);
-    background: var(--background-color);
-    color: var(--text-primary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(34, 34, 34, 0.6);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
-.circle-btn:hover {
-    background-color: var(--surface-color-light);
+.circle-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-color: #3b82f6;
+  color: white;
+  transform: scale(1.1);
 }
 
-.stop-price {
-    font-size: 1.2rem;
-    font-weight: 700;
-    min-width: 60px;
-    text-align: center;
-}
-
-.modal-actions {
-    margin-top: 24px;
-    display: flex;
-    justify-content: center;
+.circle-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .stop-price-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .stop-price-input-wrapper span {
-    position: absolute;
-    left: 10px;
-    color: var(--text-secondary);
-    font-weight: 700;
+  position: absolute;
+  left: 10px;
+  color: var(--text-secondary);
+  font-weight: 700;
+  pointer-events: none;
 }
 
 .stop-price-input {
-    width: 80px;
-    padding: 8px 8px 8px 24px;
-    background-color: var(--background-color);
-    border: 1px solid var(--surface-color-light);
-    border-radius: 8px;
-    color: var(--text-primary);
-    text-align: center;
-    font-size: 1.2rem;
-    font-weight: 700;
-    -moz-appearance: textfield;
+  width: 80px;
+  padding: 8px 8px 8px 24px;
+  background: rgba(34, 34, 34, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary);
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  -moz-appearance: textfield;
+}
+
+.stop-price-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(34, 34, 34, 0.8);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .stop-price-input::-webkit-outer-spin-button,
 .stop-price-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.modal-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
 }

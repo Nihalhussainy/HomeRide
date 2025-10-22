@@ -330,24 +330,24 @@ body {
   cursor: not-allowed;
 }
 .search-button {
-  padding: 20px 45px;
+  padding: 20px 45px !important;
   background: linear-gradient(
     135deg,
     var(--primary-color) 0%,
     var(--primary-hover) 100%
-  );
-  color: #000;
-  border: none;
-  font-weight: 700;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 1.05rem;
-  white-space: nowrap;
-  box-shadow: 0 4px 20px rgba(234, 179, 8, 0.3);
+  ) !important;
+  color: #000 !important;
+  border: none !important;
+  font-weight: 700 !important;
+  border-radius: 50px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: 1.05rem !important;
+  white-space: nowrap !important;
+  box-shadow: 0 4px 20px rgba(234, 179, 8, 0.3) !important;
 }
 
 .search-button:hover {
@@ -355,9 +355,9 @@ body {
     135deg,
     var(--primary-hover) 0%,
     var(--primary-color) 100%
-  );
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(234, 179, 8, 0.5);
+  ) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 30px rgba(234, 179, 8, 0.5) !important;
 }
 
 .hero-scroll-indicator {
@@ -662,22 +662,22 @@ body {
 }
 
 .cta-inline-button {
-  padding: 22px 68px;
-  font-size: 1.25rem;
-  font-weight: 700;
-  border-radius: 40px;
-  background: linear-gradient(90deg,#ffffff 0%, #fefbee 100%);
-  color: #161616;
-  box-shadow: 0 0 24px #312f2f, 0 7px 20px rgba(255, 255, 255, 0.2);
-  transition: box-shadow 0.18s, transform 0.2s;
-  border: none;
-  cursor: pointer;
+  padding: 22px 68px!important;
+  font-size: 1.25rem!important;
+  font-weight: 700!important;
+  border-radius: 40px!important;
+  background: linear-gradient(90deg,#ffffff 0%, #fefbee 100%)!important;
+  color: #161616!important;
+  box-shadow: 0 0 24px #312f2f, 0 7px 20px rgba(255, 255, 255, 0.2)!important;
+  transition: box-shadow 0.18s, transform 0.2s!important;
+  border: none!important;
+  cursor: pointer!important;
 }
 
 .cta-inline-button:hover {
-  background: linear-gradient(90deg,#ffce0b 0%, #fffae6 100%);
-  box-shadow: 0 0 36px #000000, 0 11px 32px rgba(234,179,8,0.26);
-  transform: translateY(-2px) scale(1.05);
+  background: linear-gradient(90deg,#ffce0b 0%, #fffae6 100%)!important;
+  box-shadow: 0 0 36px #000000, 0 11px 32px rgba(234,179,8,0.26)!important;
+  transform: translateY(-2px) scale(1.05)!important;
 }
 
 /* How It Works Section */
@@ -1107,4 +1107,3 @@ body {
     /* 3. Keep the transition smooth */
     transition: background-color 5000s ease-in-out 0s;
 }
-

@@ -493,38 +493,276 @@ function HomePage() {
           ))}
         </div>
       </section>
+<footer style={{
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
+        borderTop: '1px solid rgba(234, 179, 8, 0.15)',
+        paddingTop: '100px',
+        paddingBottom: '60px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Decorative gradient orbs */}
+        <div style={{
+          position: 'absolute',
+          top: '-100px',
+          right: '-100px',
+          width: '300px',
+          height: '300px',
+          background: 'radial-gradient(circle, rgba(234, 179, 8, 0.05) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none'
+        }}></div>
+        <div style={{
+          position: 'absolute',
+          bottom: '100px',
+          left: '-50px',
+          width: '250px',
+          height: '250px',
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none'
+        }}></div>
 
-      <footer className="homepage-footer">
-        <div className="footer-content">
-          <div className="footer-section">
-            <h3>HomeRide</h3>
-            <p className="footer-tagline">Making commutes better, one ride at a time</p>
+        <div style={{
+          maxWidth: '1400px',
+          margin: '0 auto',
+          paddingLeft: '5%',
+          paddingRight: '5%',
+          position: 'relative',
+          zIndex: 1
+        }}>
+          {/* Main Content Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: '80px',
+            marginBottom: '80px',
+            alignItems: 'start'
+          }}>
+            {/* Brand Section */}
+            <div>
+              <div style={{
+                marginBottom: '20px'
+              }}>
+                <h3 style={{
+                  fontSize: '2.2rem',
+                  fontWeight: '900',
+                  marginBottom: '16px',
+                  background: 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  letterSpacing: '-0.5px'
+                }}>
+                  HomeRide
+                </h3>
+                <div style={{
+                  width: '40px',
+                  height: '3px',
+                  background: 'linear-gradient(90deg, var(--primary-color), transparent)',
+                  borderRadius: '2px',
+                  marginBottom: '20px'
+                }}></div>
+              </div>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.65)',
+                lineHeight: '1.9',
+                fontSize: '0.95rem',
+                margin: 0
+              }}>
+                Making commutes better, one ride at a time. Connect with colleagues, save money, and reduce your carbon footprint.
+              </p>
+            </div>
+
+            {/* Quick Stats or Features */}
+            <div>
+              <h4 style={{
+                fontSize: '0.85rem',
+                fontWeight: '800',
+                marginBottom: '28px',
+                color: '#fff',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px'
+              }}>
+                Why HomeRide
+              </h4>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  alignItems: 'flex-start'
+                }}>
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: 'var(--primary-color)',
+                    marginTop: '8px',
+                    flexShrink: 0
+                  }}></div>
+                  <p style={{
+                    color: 'rgba(255, 255, 255, 0.65)',
+                    fontSize: '0.9rem',
+                    margin: 0,
+                    lineHeight: '1.6'
+                  }}>
+                    Save up to 75% on commute costs
+                  </p>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  alignItems: 'flex-start'
+                }}>
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: 'var(--primary-color)',
+                    marginTop: '8px',
+                    flexShrink: 0
+                  }}></div>
+                  <p style={{
+                    color: 'rgba(255, 255, 255, 0.65)',
+                    fontSize: '0.9rem',
+                    margin: 0,
+                    lineHeight: '1.6'
+                  }}>
+                    Build genuine workplace connections
+                  </p>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  alignItems: 'flex-start'
+                }}>
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: 'var(--primary-color)',
+                    marginTop: '8px',
+                    flexShrink: 0
+                  }}></div>
+                  <p style={{
+                    color: 'rgba(255, 255, 255, 0.65)',
+                    fontSize: '0.9rem',
+                    margin: 0,
+                    lineHeight: '1.6'
+                  }}>
+                    Reduce environmental impact together
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Links */}
+            <div>
+              <h4 style={{
+                fontSize: '0.85rem',
+                fontWeight: '800',
+                marginBottom: '28px',
+                color: '#fff',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px'
+              }}>
+                Company
+              </h4>
+              <ul style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}>
+                <li>
+                  <a href="/about" style={{
+                    color: 'rgba(255, 255, 255, 0.65)',
+                    textDecoration: 'none',
+                    transition: 'all 0.3s ease',
+                    fontSize: '0.95rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = 'var(--primary-color)';
+                    e.currentTarget.style.transform = 'translateX(6px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                  }}>
+                    <span style={{ fontSize: '1.2rem' }}>→</span>
+                    About HomeRide
+                  </a>
+                </li>
+                <li>
+                  <a href="/contact" style={{
+                    color: 'rgba(255, 255, 255, 0.65)',
+                    textDecoration: 'none',
+                    transition: 'all 0.3s ease',
+                    fontSize: '0.95rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = 'var(--primary-color)';
+                    e.currentTarget.style.transform = 'translateX(6px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                  }}>
+                    <span style={{ fontSize: '1.2rem' }}>→</span>
+                    Contact Us
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="footer-section">
-            <h4>Company</h4>
-            <ul className="footer-links">
-              <li>
-                <a href="/about">About us</a>
-              </li>
-              <li>
-                <a href="/contact">Contact</a>
-              </li>
-            </ul>
+
+          {/* Enhanced Divider */}
+          <div style={{
+            height: '1px',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(234, 179, 8, 0.2) 50%, transparent 100%)',
+            marginBottom: '40px'
+          }}></div>
+
+          {/* Bottom Section */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '30px'
+          }}>
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.5)',
+              fontSize: '0.85rem',
+              margin: 0,
+              letterSpacing: '0.3px'
+            }}>
+              © {new Date().getFullYear()} HomeRide · Exclusively for Sopra Steria Employees
+            </p>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'rgba(255, 255, 255, 0.5)',
+              fontSize: '0.85rem'
+            }}>
+              <span>Built with</span>
+              <span style={{ color: 'var(--primary-color)', fontSize: '1.1rem' }}>❤</span>
+              <span>for better commutes</span>
+            </div>
           </div>
-          <div className="footer-section">
-            <h4>Support</h4>
-            <ul className="footer-links">
-              <li>
-                <a href="help">Help center</a>
-              </li>
-              <li>
-                <a href="faq">FAQ</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} HomeRide - Exclusively for Sopra Steria</p>
         </div>
       </footer>
     </div>

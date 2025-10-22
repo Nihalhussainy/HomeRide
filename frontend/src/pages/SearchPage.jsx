@@ -17,7 +17,9 @@ function Input({ type, placeholder, value, onChange, min, ...props }) {
         fontSize: '14px',
         transition: 'all 0.2s ease',
         outline: 'none',
-        cursor: 'text'
+        cursor: 'text',
+        height: '50px',  // FIXED HEIGHT
+        boxSizing: 'border-box'  // IMPORTANT
       }}
       type={type}
       placeholder={placeholder}
@@ -236,31 +238,33 @@ function CustomDatePicker({ value, onChange }) {
   return (
     <div style={{ position: 'relative', width: '100%' }} ref={wrapperRef}>
       <div
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          width: '100%',
-          padding: '14px 16px',
-          background: 'var(--surface-color)',
-          border: '1px solid var(--surface-color-light)',
-          borderRadius: '12px',
-          color: value ? 'var(--text-primary)' : 'var(--text-secondary)',
-          fontSize: '14px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-        }}
-        onMouseLeave={(e) => {
-          if (!isOpen) e.currentTarget.style.borderColor = 'var(--surface-color-light)';
-        }}
-      >
-        <span>{value ? formatDate(value) : 'Select travel date...'}</span>
-        <FiCalendar size={18} style={{ color: '#ec4899', opacity: 0.8 }} />
-      </div>
+  onClick={() => setIsOpen(!isOpen)}
+  style={{
+    width: '100%',
+    padding: '14px 16px',
+    background: 'var(--surface-color)',
+    border: '1px solid var(--surface-color-light)',
+    borderRadius: '12px',
+    color: value ? 'var(--text-primary)' : 'var(--text-secondary)',
+    fontSize: '14px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    transition: 'all 0.2s ease',
+    height: '50px',  // FIXED HEIGHT
+    boxSizing: 'border-box'  // IMPORTANT
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+  }}
+  onMouseLeave={(e) => {
+    if (!isOpen) e.currentTarget.style.borderColor = 'var(--surface-color-light)';
+  }}
+>
+  <span>{value ? formatDate(value) : 'Select travel date...'}</span>
+  <FiCalendar size={18} style={{ color: '#ec4899', opacity: 0.8 }} />
+</div>
 
       {isOpen && (
         <div style={{
@@ -847,180 +851,183 @@ function SearchPage() {
         }}>
           <form onSubmit={handleSearch}>
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '24px',
-              marginBottom: '32px'
-            }}>
-              {/* From Field */}
-              <div>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '10px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary)'
-                }}>
-                  <FiMapPin style={{ color: '#3b82f6' }} size={18} /> From
-                </label>
-                <AutocompleteInput
-                  placeholder="Enter departure location..."
-                  value={origin}
-                  onChange={setOrigin}
-                />
-              </div>
+  display: 'grid',
+  gridTemplateColumns: 'repeat(4, 1fr)',
+  gap: '20px',
+  alignItems: 'end',  // This aligns all fields at the bottom
+  marginBottom: '32px'
+}}>
+  {/* From Field */}
+  <div>
+    <label style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      marginBottom: '10px',
+      fontSize: '14px',
+      fontWeight: '600',
+      color: 'var(--text-primary)'
+    }}>
+      <FiMapPin style={{ color: '#3b82f6' }} size={18} /> From
+    </label>
+    <AutocompleteInput
+      placeholder="Enter departure location..."
+      value={origin}
+      onChange={setOrigin}
+    />
+  </div>
 
-              {/* To Field */}
-              <div>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '10px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary)'
-                }}>
-                  <FiMapPin style={{ color: '#8b5cf6', transform: 'rotate(180deg)' }} size={18} /> To
-                </label>
-                <AutocompleteInput
-                  placeholder="Enter destination..."
-                  value={destination}
-                  onChange={setDestination}
-                />
-              </div>
+  {/* To Field */}
+  <div>
+    <label style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      marginBottom: '10px',
+      fontSize: '14px',
+      fontWeight: '600',
+      color: 'var(--text-primary)'
+    }}>
+      <FiMapPin style={{ color: '#8b5cf6', transform: 'rotate(180deg)' }} size={18} /> To
+    </label>
+    <AutocompleteInput
+      placeholder="Enter destination..."
+      value={destination}
+      onChange={setDestination}
+    />
+  </div>
 
-              {/* Travel Date */}
-              <div>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '10px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary)'
-                }}>
-                  <FiCalendar style={{ color: '#ec4899' }} size={18} /> Travel Date
-                </label>
-                <CustomDatePicker
-                  value={travelDateTime}
-                  onChange={setTravelDateTime}
-                />
-              </div>
+  {/* Travel Date */}
+  <div>
+    <label style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      marginBottom: '10px',
+      fontSize: '14px',
+      fontWeight: '600',
+      color: 'var(--text-primary)'
+    }}>
+      <FiCalendar style={{ color: '#ec4899' }} size={18} /> Travel Date
+    </label>
+    <CustomDatePicker
+      value={travelDateTime}
+      onChange={setTravelDateTime}
+    />
+  </div>
 
-              {/* Passengers */}
-              <div>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '10px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary)'
-                }}>
-                  <FiUsers style={{ color: '#10b981' }} size={18} /> Passengers
-                </label>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 16px',
-                  background: 'var(--surface-color)',
-                  border: '1px solid var(--surface-color-light)',
-                  borderRadius: '12px',
-                  gap: '16px'
-                }}>
-                  <span style={{
-                    fontWeight: '600',
-                    color: 'var(--text-primary)',
-                    fontSize: '14px',
-                    flex: 1
-                  }}>
-                    {passengerCount} Passenger{passengerCount > 1 ? 's' : ''}
-                  </span>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <button 
-                      type="button"
-                      onClick={() => handlePassengerCountChange(passengerCount - 1)}
-                      disabled={passengerCount <= 1}
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        border: '2px solid var(--surface-color-light)',
-                        background: 'var(--surface-color)',
-                        color: 'var(--text-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: passengerCount <= 1 ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.3s',
-                        opacity: passengerCount <= 1 ? 0.3 : 1
-                      }}
-                      onMouseEnter={(e) => {
-                        if (passengerCount > 1) {
-                          e.currentTarget.style.background = '#3b82f6';
-                          e.currentTarget.style.borderColor = '#3b82f6';
-                          e.currentTarget.style.color = 'white';
-                          e.currentTarget.style.transform = 'scale(1.1)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (passengerCount > 1) {
-                          e.currentTarget.style.background = 'var(--surface-color)';
-                          e.currentTarget.style.borderColor = 'var(--surface-color-light)';
-                          e.currentTarget.style.color = 'var(--text-primary)';
-                          e.currentTarget.style.transform = 'scale(1)';
-                        }
-                      }}
-                    >
-                      <FiMinus size={16} />
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => handlePassengerCountChange(passengerCount + 1)}
-                      disabled={passengerCount >= 8}
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        border: '2px solid var(--surface-color-light)',
-                        background: 'var(--surface-color)',
-                        color: 'var(--text-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: passengerCount >= 8 ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.3s',
-                        opacity: passengerCount >= 8 ? 0.3 : 1
-                      }}
-                      onMouseEnter={(e) => {
-                        if (passengerCount < 8) {
-                          e.currentTarget.style.background = '#3b82f6';
-                          e.currentTarget.style.borderColor = '#3b82f6';
-                          e.currentTarget.style.color = 'white';
-                          e.currentTarget.style.transform = 'scale(1.1)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (passengerCount < 8) {
-                          e.currentTarget.style.background = 'var(--surface-color)';
-                          e.currentTarget.style.borderColor = 'var(--surface-color-light)';
-                          e.currentTarget.style.color = 'var(--text-primary)';
-                          e.currentTarget.style.transform = 'scale(1)';
-                        }
-                      }}
-                    >
-                      <FiPlus size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+  {/* Passengers */}
+  <div>
+    <label style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      marginBottom: '10px',
+      fontSize: '14px',
+      fontWeight: '600',
+      color: 'var(--text-primary)'
+    }}>
+      <FiUsers style={{ color: '#10b981' }} size={18} /> Passengers
+    </label>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '14px 16px',
+      background: 'var(--surface-color)',
+      border: '1px solid var(--surface-color-light)',
+      borderRadius: '12px',
+      gap: '12px',
+      height: '50px',  // FIXED HEIGHT
+      boxSizing: 'border-box'  // IMPORTANT
+    }}>
+      <span style={{
+        fontWeight: '500',
+        color: 'var(--text-primary)',
+        fontSize: '14px',
+        flex: 1
+      }}>
+        {passengerCount} Passenger{passengerCount > 1 ? 's' : ''}
+      </span>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <button 
+          type="button"
+          onClick={() => handlePassengerCountChange(passengerCount - 1)}
+          disabled={passengerCount <= 1}
+          style={{
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            border: '1px solid var(--surface-color-light)',
+            background: 'var(--surface-color)',
+            color: 'var(--text-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: passengerCount <= 1 ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s',
+            opacity: passengerCount <= 1 ? 0.3 : 1
+          }}
+          onMouseEnter={(e) => {
+            if (passengerCount > 1) {
+              e.currentTarget.style.background = '#3b82f6';
+              e.currentTarget.style.borderColor = '#3b82f6';
+              e.currentTarget.style.color = 'white';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (passengerCount > 1) {
+              e.currentTarget.style.background = 'var(--surface-color)';
+              e.currentTarget.style.borderColor = 'var(--surface-color-light)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }
+          }}
+        >
+          <FiMinus size={14} />
+        </button>
+        <button 
+          type="button"
+          onClick={() => handlePassengerCountChange(passengerCount + 1)}
+          disabled={passengerCount >= 8}
+          style={{
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            border: '1px solid var(--surface-color-light)',
+            background: 'var(--surface-color)',
+            color: 'var(--text-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: passengerCount >= 8 ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s',
+            opacity: passengerCount >= 8 ? 0.3 : 1
+          }}
+          onMouseEnter={(e) => {
+            if (passengerCount < 8) {
+              e.currentTarget.style.background = '#3b82f6';
+              e.currentTarget.style.borderColor = '#3b82f6';
+              e.currentTarget.style.color = 'white';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (passengerCount < 8) {
+              e.currentTarget.style.background = 'var(--surface-color)';
+              e.currentTarget.style.borderColor = 'var(--surface-color-light)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }
+          }}
+        >
+          <FiPlus size={14} />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
             <div style={{
               display: 'flex',
