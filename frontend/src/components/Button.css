@@ -1,48 +1,107 @@
 /* src/components/Button.css */
 
-.custom-button {
-  /* NEW: Outline style for a classier look */
-  background-color: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--text-primary);
+/* UPDATED: Define rich and classic colors, and subtle depth for glassmorphic dark UI.
+   Changed primary button to a deep sapphire blue.
+*/
+:root {
+   /* Deep Sapphire Blue Palette */
+   --rich-blue-primary: #2A52BE;   /* Deep Sapphire Blue - Main */
+   --rich-blue-hover: #3A6FC7;     /* Slightly lighter for hover */
+   --rich-blue-active: #1D3E90;    /* Darker for active/pressed */
 
-  padding: 12px 24px;
-  border-radius: var(--border-radius);
+   /* Classic shadows for a 3D "pressable" feel (darker for dark UI) */
+   --classic-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.4), 0 3px 6px -3px rgba(0, 0, 0, 0.3);
+   --classic-shadow-hover: 0 12px 20px -4px rgba(0, 0, 0, 0.5), 0 5px 8px -5px rgba(0, 0, 0, 0.4);
+   /* A very subtle inner highlight/border to define the button's top edge */
+   --classic-inset-highlight: inset 0 1px 0px 0px rgba(255, 255, 255, 0.08); /* Subtle white highlight */
+   --classic-inset-shadow: inset 0 -2px 3px 0 rgba(0, 0, 0, 0.2); /* Subtle dark shadow for depth */
+
+   /* Also ensuring text and surface colors are defined for context */
+   --background-color: #0f172a; /* Assuming from index.css or a similar setup */
+   --surface-color: #1e293b;   /* Assuming */
+   --surface-color-light: #334155; /* Adjusted for secondary button */
+   --text-primary: #f8fafc;     /* Assuming */
+   --text-secondary: #94a3b8;    /* Assuming */
+   --danger-color: #ef4444;      /* Added danger color if needed */
+}
+
+.custom-button {
+  background-color: var(--rich-blue-primary);
+  color: var(--text-primary);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Manrope', sans-serif; /* Make sure Manrope font is loaded */
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease-out;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+
+  /* UPDATED: Combined classic shadows and subtle inner effects */
+  box-shadow: var(--classic-shadow), var(--classic-inset-highlight), var(--classic-inset-shadow);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Slightly stronger text shadow */
 }
 
-.custom-button:hover {
-  /* Fill in on hover */
-  background-color: var(--primary-color);
-  color: #000000;
-  border-color: var(--primary-color);
-  transform: translateY(-2px);
+.custom-button:hover:not(:disabled) {
+  background-color: var(--rich-blue-hover);
+  transform: translateY(-2px); /* Lifts slightly */
+  box-shadow: var(--classic-shadow-hover), var(--classic-inset-highlight), var(--classic-inset-shadow);
+}
+
+.custom-button:active:not(:disabled) {
+  background-color: var(--rich-blue-active);
+  transform: translateY(0px); /* Presses down */
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.05); /* Simpler inset shadow when pressed */
 }
 
 .custom-button:disabled {
   background-color: var(--surface-color-light);
   color: var(--text-secondary);
-  border-color: var(--surface-color-light);
+  border: none;
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none; /* No shadow when disabled */
 }
 
-/* This style is for secondary actions, like a "Cancel" button */
+/* Secondary button style (e.g., Cancel) */
 .custom-button.secondary {
-    background-color: var(--surface-color-light);
+    background-color: var(--surface-color-light); /* Dark gray */
     color: var(--text-primary);
-    border-color: var(--surface-color-light);
+    box-shadow: var(--classic-shadow), var(--classic-inset-highlight), var(--classic-inset-shadow);
 }
 
-.custom-button.secondary:hover {
-    background-color: #4b5563;
-    border-color: #4b5563;
+.custom-button.secondary:hover:not(:disabled) {
+    background-color: #4b5563; /* A slightly lighter gray */
+    transform: translateY(-2px);
+    box-shadow: var(--classic-shadow-hover), var(--classic-inset-highlight), var(--classic-inset-shadow);
+}
+
+.custom-button.secondary:active:not(:disabled) {
+  background-color: var(--surface-color); /* Darkest gray */
+  transform: translateY(0px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Optional: Danger button style (e.g., Delete, Confirm Cancel) */
+.custom-button.danger {
+    background-color: var(--danger-color);
+    color: white;
+    box-shadow: var(--classic-shadow), var(--classic-inset-highlight), var(--classic-inset-shadow);
+}
+
+.custom-button.danger:hover:not(:disabled) {
+    background-color: #b91c1c; /* Darker red */
+    transform: translateY(-2px);
+    box-shadow: var(--classic-shadow-hover), var(--classic-inset-highlight), var(--classic-inset-shadow);
+}
+
+.custom-button.danger:active:not(:disabled) {
+  background-color: #991b1b; /* Even darker red */
+  transform: translateY(0px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.05);
 }
