@@ -1,4 +1,4 @@
-/* src/components/Navbar.css - Inspired by the new design */
+/* src/components/Navbar.css - Final Version */
 
 .navbar {
   display: flex;
@@ -11,14 +11,11 @@
   top: 0;
   z-index: 1000;
   transition: background-color 0.3s ease, border-color 0.3s ease;
-  /*border-bottom: 1px solid transparent;*/
 }
 
-/* Add a background when scrolled */
 .navbar-scrolled {
   background-color: rgba(10, 10, 10, 0.7);
   backdrop-filter: blur(12px);
-  /*border-bottom: 1px solid var(--surface-color-light);*/
 }
 
 /* Brand / Logo */
@@ -31,7 +28,7 @@
 }
 
 .navbar-brand-icon {
-  color: var(--primary-color);
+  color: var(--primary-color); /* Use white for the icon */
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -62,31 +59,60 @@
 
 .navbar-links a {
   text-decoration: none;
-  color: var(--text-secondary);
+  color: var(--text-secondary); /* Default text color */
   font-size: 0.95rem;
   font-weight: 600;
   position: relative;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease; /* Transition only color */
   padding: 10px 20px;
   border-radius: 24px;
   display: flex;
   align-items: center;
   gap: 8px;
+  z-index: 1;
 }
 
 .navbar-links a:hover {
-  color: var(--text-primary);
+  color: var(--text-primary); /* Text becomes white on hover */
 }
 
+/* Style for the ACTIVE link in the pill */
 .navbar-links a.active {
-  color: var(--background-color);
-  background-color: var(--primary-color);
+  color: var(--text-primary); /* Text becomes white when active */
+  /* NO background color change */
 }
+
+/* Ensure icons also change color correctly on active in the pill */
+.navbar-links a.active svg {
+  color: var(--text-primary); /* Icon becomes white when active */
+}
+
 
 /* User Section (Right side) */
 .navbar-user-section {
   display: flex;
   align-items: center;
+  gap: 1rem; /* Adjust gap as needed */
+}
+
+/* Styling for the Offer Ride Link (to look like other links) */
+.navbar-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px; /* Consistent padding */
+  color: var(--text-secondary);
+  font-size: 0.95rem; /* Match pill link font size */
+  font-weight: 600; /* Match pill link font weight */
+  text-decoration: none;
+  border-radius: 20px; /* Rounded corners */
+  transition: color 0.2s ease, background-color 0.2s ease;
+  margin-right: 0.5rem; /* Space before notification */
+}
+
+.navbar-action-link:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-color-light); /* Subtle hover background */
 }
 
 /* Auth links for logged-out users */
@@ -118,8 +144,8 @@
 
 .auth-links .register-btn:hover {
     transform: translateY(-4px);
-    box-shadow: 0 4px 15px rgba(30, 29, 29, 0.2);
-    color: #1a1a1a;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1); /* Adjusted shadow */
+    color: #000000; /* Ensure text remains black */
 }
 
 /* User Menu for logged-in users */
@@ -135,9 +161,10 @@
   border: none;
   color: var(--text-primary);
   cursor: pointer;
-  padding: 4px;
+  padding: 4px; /* Adjust padding if needed */
   border-radius: 50%;
   transition: background-color 0.2s, transform 0.2s;
+  /* Removed fixed size */
 }
 
 .user-menu-button:hover {
@@ -145,17 +172,26 @@
   transform: scale(1.1);
 }
 
-.user-avatar {
-    width: 36px;
-    height: 36px;
+/* Style for BOTH image avatar and placeholder icon */
+.user-avatar,
+.user-avatar-placeholder {
+    width: 38px;  /* Increased size */
+    height: 38px; /* Increased size */
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--surface-color-light);
     padding: 2px;
     background-color: var(--surface-color);
+    display: flex; /* Added for placeholder alignment */
+    align-items: center; /* Added for placeholder alignment */
+    justify-content: center; /* Added for placeholder alignment */
+    color: var(--text-secondary); /* Color for placeholder */
+    font-size: 20px; /* Adjust icon size within placeholder */
 }
 
-.user-menu-button:hover .user-avatar {
+
+.user-menu-button:hover .user-avatar,
+.user-menu-button:hover .user-avatar-placeholder {
   border-color: var(--primary-color);
 }
 
@@ -244,9 +280,7 @@
     .user-name-nav {
         display: none;
     }
-}
-.navbar-user-section {
-  display: flex;
-  align-items: center;
-  gap: 1rem; /* Add some space between the notification bell and user menu */
+    .navbar-action-link { /* Hide Offer Ride link on mobile */
+        display: none;
+    }
 }
