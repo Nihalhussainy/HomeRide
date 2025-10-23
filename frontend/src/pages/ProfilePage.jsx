@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import RatingModal from '../components/RatingModal.jsx'; // Ensure this path is correct
-import Button from '../components/Button.jsx'; // Ensure this path is correct
-import Input from '../components/Input.jsx'; // Ensure this path is correct
-import ImageCropperModal from '../components/ImageCropperModal.jsx'; // Ensure this path is correct
-import '../App.css';
-import { useNotification } from '../context/NotificationContext.jsx'; // Ensure this path is correct
+import RatingModal from '../components/RatingModal.jsx'; 
+import Button from '../components/Button.jsx'; 
+import Input from '../components/Input.jsx'; 
+import ImageCropperModal from '../components/ImageCropperModal.jsx'; 
+import '../App.css'; 
+import './ProfilePage.css';
+import { useNotification } from '../context/NotificationContext.jsx'; 
 import {
   FiStar,
   FiMail,
@@ -556,21 +557,31 @@ function ProfilePage() {
               )}
               <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/png, image/jpeg"/>
               <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="button" onClick={handleChangePicture} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px',
-                      background: 'var(--surface-color-light)', border: '1px solid var(--surface-color-light)',
-                      borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', fontWeight: '600',
-                      cursor: 'pointer', transition: 'all 0.2s ease'
-                  }}>
+                  {/* UPDATE BUTTON with CLASS */}
+                  <button
+                      type="button"
+                      onClick={handleChangePicture}
+                      className="profile-action-button update-picture-button" // <-- Added class
+                      style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px',
+                          background: 'var(--surface-color-light)', border: '1px solid var(--surface-color-light)',
+                          borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', fontWeight: '600',
+                          cursor: 'pointer' /* Removed transition, handled by class */
+                      }}>
                       <FiCamera size={14} /> {user.profilePictureUrl ? 'Update' : 'Add'}
                   </button>
+                  {/* REMOVE BUTTON with CLASS */}
                   {user.profilePictureUrl && (
-                      <button type="button" onClick={handleRemovePicture} style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px',
-                          background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
-                          borderRadius: '8px', color: '#ef4444', fontSize: '13px', fontWeight: '600',
-                          cursor: 'pointer', transition: 'all 0.2s ease'
-                      }}>
+                      <button
+                          type="button"
+                          onClick={handleRemovePicture}
+                          className="profile-action-button remove-picture-button" // <-- Added class
+                          style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px',
+                              background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+                              borderRadius: '8px', color: '#ef4444', fontSize: '13px', fontWeight: '600',
+                              cursor: 'pointer' /* Removed transition, handled by class */
+                          }}>
                           <FiTrash2 size={14} /> Remove
                       </button>
                   )}
@@ -593,27 +604,36 @@ function ProfilePage() {
                 <input type="tel" name="phoneNumber" placeholder="+1 (234) 567-8900" value={formData.phoneNumber} onChange={handleFormChange} className="styled-input"/>
               </div>
                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px' }}>
-                <button type="button" onClick={handleCancelClick} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
-                    background: 'transparent', border: '1.5px solid var(--surface-color-light)', borderRadius: '8px',
-                    color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s ease'
-                }}>
+                {/* CANCEL BUTTON with CLASS */}
+                <button
+                    type="button"
+                    onClick={handleCancelClick}
+                    className="profile-action-button cancel-edit-button" // <-- Added class
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
+                        background: 'transparent', border: '1.5px solid var(--surface-color-light)', borderRadius: '8px',
+                        color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600', cursor: 'pointer' /* Removed transition */
+                    }}>
                   <FiXCircle size={16} /> Cancel
                 </button>
-                {/* Ensure type="submit" or handle submit via onClick */}
-                <button type="submit" onClick={handleFormSubmit} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', border: 'none', borderRadius: '8px',
-                    color: 'white', fontSize: '14px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.25s ease',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-                }}>
+                {/* SAVE BUTTON with CLASS */}
+                <button
+                    type="submit"
+                    onClick={handleFormSubmit}
+                    className="profile-action-button save-changes-button" // <-- Added class
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', border: 'none', borderRadius: '8px',
+                        color: 'white', fontSize: '14px', fontWeight: '600', cursor: 'pointer', /* Removed transition & boxShadow */
+                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' // Keep initial shadow if desired
+                    }}>
                   <FiSave size={16} /> Save Changes
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          /* PROFILE DISPLAY VIEW */
+          /* PROFILE DISPLAY VIEW (No changes needed here for button hovers) */
           <div style={{
               background: 'var(--surface-color)', border: '1px solid var(--surface-color-light)',
               borderRadius: '16px', padding: '28px', marginBottom: '24px', display: 'flex',
@@ -680,7 +700,7 @@ function ProfilePage() {
           </div>
         )}
 
-        {/* TABS AND CONTENT */}
+        {/* TABS AND CONTENT (No changes needed here) */}
         <div style={{
             background: 'var(--surface-color)', border: '1px solid var(--surface-color-light)',
             borderRadius: '16px', padding: '24px', marginBottom: '24px'

@@ -206,7 +206,7 @@ function HomePage() {
     {
       name: "Michael Chen",
       role: "Software Engineer",
-      text: "The convenience of carpooling with colleagues is unmatched. No more stress about parking, and I actually look forward to my commute now.",
+      text: "Who knew commuting could be this fun? Thanks to Homeride, I’ve turned my daily traffic jam into a rolling gossip session with colleagues. Bonus: I haven’t touched my car’s fuel cap in weeks!",
       rating: 5,
       avatar:
         "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
@@ -449,19 +449,19 @@ function HomePage() {
 
       <section className="stats-section">
         <div className="stat-item">
-          <div className="stat-number">2,500</div>
+          <div className="stat-number">50</div>
           <div className="stat-label">Active Users</div>
         </div>
         <div className="stat-item">
-          <div className="stat-number">10,000</div>
+          <div className="stat-number">100</div>
           <div className="stat-label">Rides Completed</div>
         </div>
         <div className="stat-item">
-          <div className="stat-number">450K</div>
+          <div className="stat-number">5K</div>
           <div className="stat-label">Saved by Employees</div>
         </div>
         <div className="stat-item">
-          <div className="stat-number">25 Tons</div>
+          <div className="stat-number">5 Tons</div>
           <div className="stat-label">CO2 Reduced</div>
         </div>
       </section>

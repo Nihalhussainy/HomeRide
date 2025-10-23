@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FiMessageSquare, FiX, FiSend, FiLoader } from 'react-icons/fi';
+import { RiRobot2Fill, RiUser3Fill } from 'react-icons/ri';
 import './Chatbot.css';
 
 function Chatbot() {
@@ -109,38 +110,61 @@ function Chatbot() {
         <div className="chatbot-container">
             {!isOpen && (
                 <button className="chatbot-toggle-button" onClick={toggleChat} aria-label="Open Chat">
-                    <FiMessageSquare size={28} />
+                    <RiRobot2Fill size={32} />
                 </button>
             )}
 
             {isOpen && (
                 <div className="chatbot-window">
                     <div className="chatbot-header">
-                        <h2>GOGO Assistant</h2>
+                        <div className="chatbot-header-content">
+                            <div className="chatbot-avatar">
+                                <RiRobot2Fill size={24} />
+                            </div>
+                            <div className="chatbot-header-text">
+                                <h2>GOGO Assistant</h2>
+                            </div>
+                        </div>
                         <button onClick={toggleChat} aria-label="Close Chat">
-                            <FiX size={20} />
+                            <FiX size={22} />
                         </button>
                     </div>
 
                     <div className="chatbot-messages">
                         {messages.map((msg, index) => (
-                            <React.Fragment key={index}>
-                                <div className={`message ${msg.sender}`}>
-                                    <p>{msg.text}</p>
+                            <div key={index} className={`message-wrapper ${msg.sender}`}>
+                                <div className={`message-avatar ${msg.sender}`}>
+                                    {msg.sender === 'bot' ? (
+                                        <RiRobot2Fill size={18} />
+                                    ) : (
+                                        <RiUser3Fill size={18} />
+                                    )}
                                 </div>
-                                {msg.isContactMessage && (
-                                    <button 
-                                        className="contact-page-button"
-                                        onClick={handleContactClick}
-                                    >
-                                        Go to Contact Page
-                                    </button>
-                                )}
-                            </React.Fragment>
+                                <div className="message-content">
+                                    <div className={`message ${msg.sender}`}>
+                                        <p>{msg.text}</p>
+                                    </div>
+                                    {msg.isContactMessage && (
+                                        <button 
+                                            className="contact-page-button"
+                                            onClick={handleContactClick}
+                                        >
+                                            Go to Contact Page
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         ))}
                         {isLoading && (
-                            <div className="message bot loading">
-                                <FiLoader className="spin" />
+                            <div className="message-wrapper bot">
+                                <div className="message-avatar bot">
+                                    <RiRobot2Fill size={18} />
+                                </div>
+                                <div className="message-content">
+                                    <div className="message bot loading">
+                                        <FiLoader className="spin" size={20} />
+                                    </div>
+                                </div>
                             </div>
                         )}
                         <div ref={messagesEndRef} />
@@ -156,7 +180,7 @@ function Chatbot() {
                             disabled={isLoading}
                         />
                         <button type="submit" disabled={isLoading || !inputValue.trim()} aria-label="Send Message">
-                            <FiSend size={18} />
+                            <FiSend size={20} />
                         </button>
                     </form>
                 </div>

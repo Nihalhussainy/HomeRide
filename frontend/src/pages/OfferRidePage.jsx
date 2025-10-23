@@ -1,15 +1,180 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import AutocompleteInput from '../components/AutocompleteInput.jsx';
 import Input from '../components/Input.jsx';
 import { useNotification } from '../context/NotificationContext.jsx';
 import axios from 'axios';
-import { FiPlus, FiMinus, FiArrowRight, FiSend, FiShield, FiMessageSquare, FiMinusCircle, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiPlus, FiMinus, FiArrowRight, FiSend, FiShield, FiMessageSquare, FiMinusCircle, FiX, FiChevronLeft, FiChevronRight, FiChevronDown } from 'react-icons/fi';
 import { getTotalPriceRange, getSegmentPriceRange } from '../utils/pricingCalculations.js';
 import './OfferRidePage.css';
 
 const TOTAL_STEPS = 9;
+
+// Custom Dropdown Component
+const CustomDropdown = ({ 
+  value, 
+  onChange, 
+  options,
+  placeholder = "Select an option",
+  label,
+  icon: Icon
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const selectedOption = options.find(opt => opt.value === value);
+  const selectedLabel = selectedOption?.label || placeholder;
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div>
+      {label && (
+        <label style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '0.9rem',
+          fontWeight: '600',
+          color: 'var(--text-secondary)',
+          marginBottom: '10px',
+          paddingLeft: '4px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          transition: 'color 0.3s ease',
+        }}>
+          {Icon && <Icon style={{ color: '#3b82f6' }} size={18} />}
+          {label}
+        </label>
+      )}
+
+      <div ref={dropdownRef} style={{ position: 'relative' }}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          style={{
+            width: '100%',
+            padding: '14px 16px',
+            background: 'rgba(34, 34, 34, 0.6)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '14px',
+            color: 'var(--text-primary)',
+            fontSize: '1rem',
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            textAlign: 'left',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+            e.currentTarget.style.background = 'rgba(34, 34, 34, 0.8)';
+          }}
+          onMouseLeave={(e) => {
+            if (!isOpen) {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.background = 'rgba(34, 34, 34, 0.6)';
+            }
+          }}
+        >
+          <span>{selectedLabel}</span>
+          <FiChevronDown 
+            size={20} 
+            style={{
+              transition: 'transform 0.3s ease',
+              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              color: '#3b82f6',
+              flexShrink: 0
+            }}
+          />
+        </button>
+
+        {isOpen && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: '8px',
+              background: 'rgba(17, 17, 17, 0.95)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '14px',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              overflow: 'hidden',
+              zIndex: 1000,
+              animation: 'slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            <style>{`
+              @keyframes slideDown {
+                from {
+                  opacity: 0;
+                  transform: translateY(-10px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+            `}</style>
+            {options.map((option, idx) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                type="button"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: value === option.value 
+                    ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)'
+                    : 'transparent',
+                  border: 'none',
+                  color: value === option.value ? '#fff' : 'var(--text-primary)',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.2s ease',
+                  borderBottom: idx < options.length - 1 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                  fontWeight: value === option.value ? '600' : '400',
+                }}
+                onMouseEnter={(e) => {
+                  if (value !== option.value) {
+                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (value !== option.value) {
+                    e.currentTarget.style.background = 'transparent';
+                  }
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const CustomDatePicker = ({ value, onChange, minDate }) => {
     const [currentDate, setCurrentDate] = useState(() => {
@@ -485,7 +650,7 @@ function OfferRidePage() {
             case 3:
                 const isOriginCity = step === 1;
                 const cityKey = isOriginCity ? 'originCity' : 'destinationCity';
-                const cityPlaceholder = isOriginCity ? "e.g., Nellore" : "e.g., Chennai";
+                const cityPlaceholder = isOriginCity ? "Enter origin city" : "Enter destination city";
                 const cityTitle = isOriginCity ? "Which city are you leaving from?" : "Which city are you going to?";
                 return (
                     <LocationStep
@@ -701,28 +866,31 @@ function OfferRidePage() {
                             <label>Vehicle Model*</label>
                             <Input
                                 type="text"
-                                placeholder="e.g., Toyota Camry, Maruti Swift"
+                                placeholder="e.g., Volkswagen Virtus"
                                 value={formData.vehicleModel}
                                 onChange={(e) => handleInputChange('vehicleModel', e.target.value)}
                                 required
                             />
                         </div>
+
                         <div className="form-field">
-                            <label><FiShield /> Passenger Preference</label>
-                            <select
-                                className="custom-input"
+                            <CustomDropdown
                                 value={formData.genderPreference}
-                                onChange={(e) => handleInputChange('genderPreference', e.target.value)}
-                            >
-                                <option value="ALL">All Genders Welcome</option>
-                                <option value="FEMALE_ONLY">Female Passengers Only</option>
-                            </select>
+                                onChange={(val) => handleInputChange('genderPreference', val)}
+                                label="PASSENGER PREFERENCE"
+                                icon={FiShield}
+                                options={[
+                                    { value: 'ALL', label: 'All Genders Welcome' },
+                                    { value: 'FEMALE_ONLY', label: 'Female Passengers Only' },
+                                ]}
+                            />
                         </div>
+
                         <div className="form-field">
                             <label><FiMessageSquare /> Driver's Note (Optional)</label>
                             <textarea
                                 className="custom-textarea"
-                                placeholder="e.g., Leaving exactly on time. Luggage space for small bags only."
+                                placeholder="e.g., Leaving exactly on time. Luggage space for small bags only. Pets not allowed."
                                 value={formData.driverNote}
                                 onChange={(e) => handleInputChange('driverNote', e.target.value)}
                                 rows="3"
