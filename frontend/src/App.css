@@ -10,11 +10,13 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  background: linear-gradient(135deg, #1f2937, #111827);
+  background-image: radial-gradient(circle at 1px 1px, var(--surface-color-light) 1px, transparent 0);
+  background-size: 20px 20px;
 }
 
 .welcome-panel {
   flex: 1;
-  background: linear-gradient(135deg, #1f2937, #111827);
   color: white;
   display: flex;
   flex-direction: column;
@@ -22,8 +24,6 @@
   align-items: center;
   text-align: center;
   padding: 50px;
-  background-image: radial-gradient(circle at 1px 1px, var(--surface-color-light) 1px, transparent 0);
-  background-size: 20px 20px;
 }
 
 .welcome-panel h2 {
@@ -42,7 +42,6 @@
 
 .form-panel {
   flex: 1;
-  background-color: var(--surface-color);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -69,6 +68,138 @@
 .form-box form button {
   margin-top: 20px;
   width: 100%;
+}
+
+/* Custom Dropdown Styles */
+.custom-dropdown-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.custom-dropdown-button {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--background-color);
+  border: 1.5px solid var(--surface-color-light);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.custom-dropdown-button:hover {
+  border-color: var(--primary-color);
+  background-color: var(--surface-color);
+}
+
+.custom-dropdown-button:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-label {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-label-content {
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-icon {
+  transition: transform 0.3s ease;
+  color: var(--text-secondary);
+}
+
+.dropdown-icon.open {
+  transform: rotate(180deg);
+  color: var(--primary-color);
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--surface-color);
+  border: 1.5px solid var(--surface-color-light);
+  border-radius: 8px;
+  margin-top: 8px;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: dropdownSlide 0.2s ease;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-option {
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.dropdown-option:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dropdown-option.selected {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-left-color: var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.dropdown-option.selected:hover {
+  background-color: var(--primary-color);
+  color: white;
+  border-left-color: white;
+}
+
+.option-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.option-checkmark {
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-left: 8px;
+  font-size: 1.1rem;
+}
+
+.dropdown-option.selected:hover .option-checkmark {
+  color: white;
 }
 
 

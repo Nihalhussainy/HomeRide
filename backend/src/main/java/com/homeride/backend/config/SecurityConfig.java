@@ -68,7 +68,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/rides/{rideId}").authenticated()
                         .requestMatchers("/api/rides/**").authenticated()
                         .requestMatchers("/api/ratings/**").authenticated()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        //.requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/employees/me/profile-picture").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/employees/me/profile-picture").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/employees/me").authenticated()

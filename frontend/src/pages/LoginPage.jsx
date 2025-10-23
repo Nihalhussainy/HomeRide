@@ -33,9 +33,9 @@ function LoginPage() {
       const userRole = decodedToken.role.replace('ROLE_', '');
 
       if (userRole === 'ADMIN') {
-        navigate('/admin');
+        navigate('/homepage');
       } else {
-        navigate('/dashboard');
+        navigate('/homepage');
       }
 
     } catch (error) {
