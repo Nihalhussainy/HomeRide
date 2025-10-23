@@ -1,19 +1,19 @@
-// backend/model/Rating.java
 package com.homeride.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
-// The com.fasterxml.jackson.annotation.JsonBackReference import is no longer needed
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "ratings")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Rating {
 
     @Id
@@ -31,7 +31,6 @@ public class Rating {
     private Employee ratee;
 
     // The ride this rating is associated with
-    // FIX: Removed @JsonBackReference to allow ride details to be serialized
     @ManyToOne
     @JoinColumn(name = "ride_request_id", nullable = false)
     private RideRequest rideRequest;
