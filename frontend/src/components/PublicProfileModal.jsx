@@ -3,7 +3,7 @@ import axios from 'axios';
 import Button from './Button.jsx';
 import '../App.css';
 import './RatingModal.css';
-import './PublicProfileModal.css';
+
 import { 
   FiUser, 
   FiMail, 
